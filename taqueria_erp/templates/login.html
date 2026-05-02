@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Taquería ERP — Acceso</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0c0b09;--surface:#161412;--card:#1e1c18;
+  --border:rgba(255,255,255,0.08);--border2:rgba(255,255,255,0.15);
+  --amber:#EF9F27;--amber2:#FAC775;--amber-dim:rgba(239,159,39,0.08);
+  --red:#E24B4A;--text:#f0ede4;--muted:#6e6b63;
+  --font-d:'Bebas Neue',sans-serif;--font:'DM Sans',sans-serif;
+}
+html,body{height:100%;overflow:hidden}
+body{background:var(--bg);color:var(--text);font-family:var(--font);display:grid;grid-template-columns:1fr 480px}
+
+/* ── LEFT PANEL ── */
+.left{
+  position:relative;overflow:hidden;
+  background:#0c0b09;
+  display:flex;flex-direction:column;justify-content:flex-end;padding:3rem;
+}
+.left-bg{
+  position:absolute;inset:0;
+  background:
+    radial-gradient(ellipse 60% 50% at 30% 40%, rgba(239,159,39,0.12) 0%, transparent 70%),
+    radial-gradient(ellipse 40% 60% at 70% 80%, rgba(239,159,39,0.06) 0%, transparent 60%);
+}
+.grid-lines{position:absolute;inset:0;opacity:0.04}
+.grid-lines svg{width:100%;height:100%}
+.taco-big{
+  position:absolute;top:50%;left:50%;transform:translate(-50%,-60%);
+  font-size:200px;opacity:0.06;filter:blur(2px);
+  animation:float 6s ease-in-out infinite;
+  user-select:none;
+}
+@keyframes float{0%,100%{transform:translate(-50%,-60%) rotate(-5deg)}50%{transform:translate(-50%,-63%) rotate(5deg)}}
+.left-content{position:relative;z-index:1}
+.left-tag{
+  display:inline-block;
+  border:0.5px solid var(--amber);color:var(--amber);
+  font-size:10px;letter-spacing:3px;text-transform:uppercase;
+  padding:5px 14px;border-radius:20px;margin-bottom:1.5rem;
+}
+.left-h1{font-family:var(--font-d);font-size:72px;line-height:0.9;letter-spacing:2px;margin-bottom:1.5rem}
+.left-h1 span{color:var(--amber)}
+.left-desc{font-size:14px;color:var(--muted);max-width:400px;line-height:1.7}
+.left-stats{display:flex;gap:2rem;margin-top:2.5rem}
+.lstat-val{font-family:var(--font-d);font-size:32px;color:var(--amber)}
+.lstat-lbl{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-top:2px}
+
+/* ── RIGHT PANEL ── */
+.right{
+  background:var(--surface);border-left:0.5px solid var(--border2);
+  display:flex;flex-direction:column;justify-content:center;
+  padding:3rem 2.5rem;position:relative;overflow:hidden;
+}
+.right::before{
+  content:'';position:absolute;top:-100px;right:-100px;
+  width:300px;height:300px;border-radius:50%;
+  background:radial-gradient(circle,rgba(239,159,39,0.06) 0%,transparent 70%);
+}
+.login-logo{margin-bottom:2.5rem}
+.login-icon{font-size:36px;display:block;margin-bottom:12px}
+.login-brand{font-family:var(--font-d);font-size:36px;color:var(--amber);letter-spacing:4px;line-height:1}
+.login-sub{font-size:12px;color:var(--muted);margin-top:6px;letter-spacing:1px}
+.login-title{font-size:22px;font-weight:600;margin-bottom:0.35rem}
+.login-hint{font-size:13px;color:var(--muted);margin-bottom:2rem}
+
+.field{margin-bottom:1.1rem}
+.field label{display:block;font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:6px}
+.input-wrap{position:relative}
+.input-icon{position:absolute;left:13px;top:50%;transform:translateY(-50%);font-size:15px;opacity:0.4}
+.field input{
+  width:100%;background:var(--card);
+  border:0.5px solid var(--border2);border-radius:10px;
+  padding:12px 14px 12px 40px;color:var(--text);
+  font-size:14px;font-family:var(--font);outline:none;
+  transition:border-color 0.2s,box-shadow 0.2s;
+}
+.field input:focus{border-color:var(--amber);box-shadow:0 0 0 3px rgba(239,159,39,0.1)}
+.field input::placeholder{color:var(--muted)}
+
+.btn-login{
+  width:100%;background:var(--amber);color:#1a1300;
+  border:none;border-radius:10px;padding:14px;
+  font-size:14px;font-weight:700;font-family:var(--font);
+  cursor:pointer;letter-spacing:1px;text-transform:uppercase;
+  transition:all 0.2s;margin-top:0.5rem;
+  display:flex;align-items:center;justify-content:center;gap:8px;
+}
+.btn-login:hover{background:var(--amber2);transform:translateY(-1px);box-shadow:0 8px 24px rgba(239,159,39,0.25)}
+.btn-login:active{transform:translateY(0)}
+.btn-login.loading{opacity:0.7;pointer-events:none}
+
+.error-bar{
+  background:rgba(226,75,74,0.1);border:0.5px solid var(--red);
+  border-radius:8px;padding:10px 14px;
+  font-size:13px;color:var(--red);
+  margin-top:1rem;display:none;
+  animation:shake 0.3s ease;
+}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+
+.roles-hint{margin-top:2rem;padding-top:1.5rem;border-top:0.5px solid var(--border)}
+.roles-title{font-size:10px;text-transform:uppercase;letter-spacing:2px;color:var(--muted);margin-bottom:10px}
+.roles-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.role-chip{
+  background:var(--card);border:0.5px solid var(--border);
+  border-radius:8px;padding:8px 10px;display:flex;align-items:center;gap:7px;
+  font-size:11px;color:var(--muted);
+}
+.role-chip .dot{width:6px;height:6px;border-radius:50%;background:var(--amber);flex-shrink:0}
+.role-chip.admin .dot{background:var(--amber)}
+.role-chip.cajero .dot{background:#3b82f6}
+.role-chip.mesero .dot{background:#5a9e1f}
+.role-chip.taquero .dot{background:#e24b4a}
+
+.spinner{
+  width:16px;height:16px;border:2px solid rgba(26,19,0,0.3);
+  border-top-color:#1a1300;border-radius:50%;
+  animation:spin 0.7s linear infinite;
+}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* responsive mínimo */
+@media(max-width:900px){
+  body{grid-template-columns:1fr}
+  .left{display:none}
+  .right{padding:2rem 1.5rem}
+}
+</style>
+</head>
+<body>
+
+<!-- ── LEFT ── -->
+<div class="left">
+  <div class="left-bg"></div>
+  <div class="grid-lines">
+    <svg viewBox="0 0 800 600" preserveAspectRatio="xMidYMid slice">
+      <defs><pattern id="g" width="50" height="50" patternUnits="userSpaceOnUse"><path d="M50 0H0V50" fill="none" stroke="white" stroke-width="0.5"/></pattern></defs>
+      <rect width="100%" height="100%" fill="url(#g)"/>
+    </svg>
+  </div>
+  <div class="taco-big">🌮</div>
+  <div class="left-content">
+    <div class="left-tag">Sistema de gestión</div>
+    <h1 class="left-h1">TAQUERÍA<br/><span>ERP</span></h1>
+    <p class="left-desc">Gestiona órdenes, inventario, empleados y reportes desde un solo lugar. Rápido, simple y a tu medida.</p>
+    <div class="left-stats">
+      <div><div class="lstat-val">360°</div><div class="lstat-lbl">Control total</div></div>
+      <div><div class="lstat-val">∞</div><div class="lstat-lbl">Órdenes / día</div></div>
+      <div><div class="lstat-val">4</div><div class="lstat-lbl">Roles de acceso</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ── RIGHT ── -->
+<div class="right">
+  <div class="login-logo">
+    <span class="login-icon">🌮</span>
+    <div class="login-brand">TAQUERÍA ERP</div>
+    <div class="login-sub">Sistema de gestión integral v1.0</div>
+  </div>
+
+  <h2 class="login-title">Bienvenido</h2>
+  <p class="login-hint">Ingresa tus credenciales para continuar</p>
+
+  <div class="field">
+    <label>Usuario</label>
+    <div class="input-wrap">
+      <span class="input-icon">👤</span>
+      <input id="u" type="text" placeholder="Tu usuario" autocomplete="username"/>
+    </div>
+  </div>
+
+  <div class="field">
+    <label>Contraseña</label>
+    <div class="input-wrap">
+      <span class="input-icon">🔒</span>
+      <input id="p" type="password" placeholder="••••••••" autocomplete="current-password"/>
+    </div>
+  </div>
+
+  <button class="btn-login" id="btn-login" onclick="doLogin()">
+    <span id="btn-txt">Entrar al sistema</span>
+  </button>
+
+  <div class="error-bar" id="err">Usuario o contraseña incorrectos. Intenta de nuevo.</div>
+
+  <div class="roles-hint">
+    <div class="roles-title">Niveles de acceso</div>
+    <div class="roles-grid">
+      <div class="role-chip admin"><div class="dot"></div>Administrador — Todo</div>
+      <div class="role-chip cajero"><div class="dot"></div>Cajero — Órdenes + Inv.</div>
+      <div class="role-chip mesero"><div class="dot"></div>Mesero — Órdenes</div>
+      <div class="role-chip taquero"><div class="dot"></div>Taquero — Ver órdenes</div>
+    </div>
+  </div>
+</div>
+
+<script>
+const API = 'http://127.0.0.1:8000/api';
+
+async function doLogin() {
+  const u = document.getElementById('u').value.trim();
+  const p = document.getElementById('p').value;
+  const err = document.getElementById('err');
+  const btn = document.getElementById('btn-login');
+  const txt = document.getElementById('btn-txt');
+
+  if (!u || !p) { showErr('Completa usuario y contraseña'); return; }
+
+  btn.classList.add('loading');
+  txt.innerHTML = '<div class="spinner"></div> Verificando...';
+  err.style.display = 'none';
+
+  try {
+    const r = await fetch(`${API}/token/`, {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({username: u, password: p})
+    });
+    if (!r.ok) throw new Error('401');
+    const d = await r.json();
+
+    localStorage.setItem('erp_access', d.access);
+    localStorage.setItem('erp_refresh', d.refresh);
+    localStorage.setItem('erp_user', u);
+
+    // Obtener rol del empleado
+    const empR = await fetch(`${API}/empleados/empleados/`, {
+      headers: {'Authorization': 'Bearer ' + d.access}
+    });
+    if (empR.ok) {
+      const empD = await empR.json();
+      const lista = empD.results || empD;
+      const emp = lista.find(e => e.usuario_username === u || true);
+      localStorage.setItem('erp_rol', emp?.rol || 'mesero');
+    } else {
+      localStorage.setItem('erp_rol', 'admin');
+    }
+
+    txt.innerHTML = '✓ Acceso concedido';
+    setTimeout(() => { window.location.href = '/erp/'; }, 600);
+
+  } catch(e) {
+    btn.classList.remove('loading');
+    txt.textContent = 'Entrar al sistema';
+    showErr('Usuario o contraseña incorrectos');
+  }
+}
+
+function showErr(msg) {
+  const err = document.getElementById('err');
+  err.textContent = msg;
+  err.style.display = 'block';
+}
+
+// Enter
+document.addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
+
+// Si ya tiene sesión, redirigir
+if (localStorage.getItem('erp_access')) {
+  window.location.href = '/erp/';
+}
+</script>
+</body>
+</html>
