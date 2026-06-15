@@ -1,6 +1,32 @@
+# Entorno virtual
 venv/
+
+# Python
 __pycache__/
 *.pyc
-.env
+*.pyo
+*.pyd
+
+# Django
 db.sqlite3
+db.sqlite3-journal
 media/
+staticfiles/
+
+# Variables de entorno
+.env
+
+# Logs
+logs/
+*.log
+
+# Backups
+backup_sqlite.json
+*.json.bak
+
+# VS Code
+.vscode/
+
+# Windows
+Thumbs.db
+Desktop.ini

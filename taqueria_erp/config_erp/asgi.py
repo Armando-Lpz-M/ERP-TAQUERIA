@@ -1,5 +1,5 @@
 """
-ASGI config for taqueria_erp project.
+ASGI config for config_erp project.
 
 It exposes the ASGI callable as a module-level variable named ``application``.
 
@@ -11,6 +11,6 @@ import os
 
 from django.core.asgi import get_asgi_application
 
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'taqueria_erp.settings')
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config_erp.settings')
 
 application = get_asgi_application()
