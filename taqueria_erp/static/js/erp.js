@@ -25,7 +25,7 @@ const S = {
   token:       localStorage.getItem('erp_access'),
   refresh:     localStorage.getItem('erp_refresh'),
   user:        localStorage.getItem('erp_user'),
-  rol:         localStorage.getItem('erp_rol') || 'mesero',
+  rol:         localStorage.getItem('erp_rol') || 'desconocido',
   ordenes:     [],
   ordenActual: null,
   menu:        [],
@@ -42,8 +42,33 @@ const S = {
    UTILS
 ══════════════════════════════════════ */
 
-/** Formatea un número como moneda MXN */
-const fmt = n => '$' + parseFloat(n || 0).toFixed(2);
+const locale = document.documentElement.lang || 'es-MX';
+const currencyCode = document.documentElement.dataset.currencyCode;
+const timeZone = document.documentElement.dataset.timeZone;
+const currencyFormatter = new Intl.NumberFormat(locale, { style: 'currency', currency: currencyCode });
+const numberFormatter = new Intl.NumberFormat(locale, { maximumFractionDigits: 2 });
+
+const fmt = value => currencyFormatter.format(Number.parseFloat(value) || 0);
+const formatNumber = value => numberFormatter.format(Number.parseFloat(value) || 0);
+const setCurrencyValue = (element, value) => {
+  const numericValue = Number(value) || 0;
+  element.dataset.value = String(numericValue);
+  element.textContent = currencyFormatter.format(numericValue);
+};
+const formatDate = value => {
+  if (!value) return '';
+  const [year, month, day] = String(value).slice(0, 10).split('-').map(Number);
+  const date = year && month && day ? new Date(year, month - 1, day) : new Date(value);
+  return new Intl.DateTimeFormat(locale, {
+    timeZone, year: 'numeric', month: 'short', day: 'numeric',
+  }).format(date);
+};
+const formatDateTime = (value, options = {}) => new Intl.DateTimeFormat(locale, { ...options, timeZone }).format(value);
+const formatPaymentMethod = method => ({
+  efectivo: gettext('Cash'),
+  tarjeta: gettext('Card'),
+  transferencia: gettext('Transfer'),
+}[method] || method);
 
 /** Calcula el total de una orden */
 const calcTotal = o => o.items.reduce((s, i) => s + i.precio * i.qty, 0);
@@ -140,9 +165,10 @@ function navTo(page, btn) {
 
 /** Oculta del sidebar las secciones que el rol no puede ver */
 function aplicarPermisos() {
-  document.querySelectorAll('.nav-btn').forEach(btn => {
-    const roles = btn.getAttribute('data-roles')?.split(',') || [];
-    btn.style.display = roles.includes(S.rol) ? '' : 'none';
+  if (S.rol === 'taquero') S.rol = 'cocina';
+  document.querySelectorAll('[data-roles]').forEach(element => {
+    const roles = element.getAttribute('data-roles').split(',').map(role => role.trim());
+    element.style.display = roles.includes(S.rol) ? '' : 'none';
   });
 }
 
@@ -157,33 +183,33 @@ function doLogout() {
 ══════════════════════════════════════ */
 const MENU_DEMO = [
   {
-    categoria: 'Tacos',
+    categoria: gettext('Tacos'),
     productos: [
-      { id: 1, nombre: 'Taco al pastor',  precio: '18.00', disponible: true },
-      { id: 2, nombre: 'Taco de bistec',  precio: '20.00', disponible: true },
-      { id: 3, nombre: 'Taco de suadero', precio: '18.00', disponible: true },
-      { id: 4, nombre: 'Taco de tripa',   precio: '16.00', disponible: true },
+      { id: 1, nombre: gettext('Taco al pastor'),  precio: '18.00', disponible: true },
+      { id: 2, nombre: gettext('Taco de bistec'),  precio: '20.00', disponible: true },
+      { id: 3, nombre: gettext('Taco de suadero'), precio: '18.00', disponible: true },
+      { id: 4, nombre: gettext('Taco de tripa'),   precio: '16.00', disponible: true },
     ],
   },
   {
-    categoria: 'Quesadillas',
+    categoria: gettext('Quesadillas'),
     productos: [
-      { id: 5, nombre: 'Quesadilla queso',     precio: '35.00', disponible: true },
-      { id: 6, nombre: 'Quesadilla con carne', precio: '45.00', disponible: true },
+      { id: 5, nombre: gettext('Cheese quesadilla'),     precio: '35.00', disponible: true },
+      { id: 6, nombre: gettext('Meat quesadilla'), precio: '45.00', disponible: true },
     ],
   },
   {
-    categoria: 'Bebidas',
+    categoria: gettext('Drinks'),
     productos: [
-      { id: 7, nombre: 'Agua fresca', precio: '20.00', disponible: true },
-      { id: 8, nombre: 'Refresco',    precio: '25.00', disponible: true },
+      { id: 7, nombre: gettext('Fresh water'), precio: '20.00', disponible: true },
+      { id: 8, nombre: gettext('Soda'),    precio: '25.00', disponible: true },
     ],
   },
   {
-    categoria: 'Extras',
+    categoria: gettext('Extras'),
     productos: [
-      { id: 9,  nombre: 'Guacamole', precio: '15.00', disponible: true },
-      { id: 10, nombre: 'Tostada',   precio: '12.00', disponible: true },
+      { id: 9,  nombre: gettext('Guacamole'), precio: '15.00', disponible: true },
+      { id: 10, nombre: gettext('Tostada'),   precio: '12.00', disponible: true },
     ],
   },
 ];
@@ -212,48 +238,61 @@ async function cargarTodo() {
   document.getElementById('u-av').textContent   = (S.user || '?')[0].toUpperCase();
   document.getElementById('u-name').textContent = S.user || '—';
   document.getElementById('u-rol').textContent  = S.rol  || '—';
-  document.getElementById('dash-date').textContent = new Date().toLocaleDateString(
-    'es-MX', { weekday: 'long', day: 'numeric', month: 'long' }
-  );
+  document.getElementById('dash-date').textContent = formatDateTime(new Date(), {
+    weekday: 'long', day: 'numeric', month: 'long',
+  });
 
   aplicarPermisos();
+
+  if (S.rol === 'cocina') {
+    await cargarPedidosCocina();
+    return;
+  }
 
   // Menú
   try {
     S.menu = await apiFetch('/cocina/productos/menu/');
   } catch {
     S.menu = MENU_DEMO;
-    toast('Menú en modo demo', '');
+    toast(gettext('Menu in demo mode'), '');
   }
 
-  // Ingredientes
-  try {
-    const r = await apiFetch('/cocina/ingredientes/');
-    S.ingredientes = r?.results || r;
-  } catch {
-    S.ingredientes = INV_DEMO;
+  // Ingredient stock and cost-related inventory are only loaded for the owner.
+  if (S.rol === 'admin') {
+    try {
+      const r = await apiFetch('/cocina/ingredientes/');
+      S.ingredientes = r?.results || r;
+    } catch {
+      S.ingredientes = INV_DEMO;
+    }
+  } else {
+    S.ingredientes = [];
   }
 
-  // Empleados
-  try {
-    const r = await apiFetch('/empleados/empleados/');
-    S.empleados = r?.results || r;
-    const sel = document.getElementById('mo-emp');
-    sel.innerHTML = '<option value="">Sin asignar</option>';
-    S.empleados.forEach(e => {
-      const o = document.createElement('option');
-      o.value       = e.id;
-      o.textContent = `${e.nombre} ${e.apellido}`;
-      sel.appendChild(o);
+  // Employee records are owner-only; waiters are assigned server-side.
+  const employeeSelect = document.getElementById('mo-emp');
+  employeeSelect.innerHTML = `<option value="">${gettext('Unassigned')}</option>`;
+  if (S.rol === 'admin') {
+    try {
+      const r = await apiFetch('/empleados/empleados/');
+      S.empleados = r?.results || r;
+    } catch {
+      S.empleados = EMP_DEMO;
+    }
+    S.empleados.forEach(employee => {
+      const option = document.createElement('option');
+      option.value = employee.id;
+      option.textContent = `${employee.nombre} ${employee.apellido}`;
+      employeeSelect.appendChild(option);
     });
-  } catch {
-    S.empleados = EMP_DEMO;
+  } else {
+    S.empleados = [];
   }
 
   // Poblar selects de ingredientes
   ['me-i', 'ms-i'].forEach(id => {
     const s = document.getElementById(id);
-    s.innerHTML = '<option value="">Seleccionar...</option>';
+    s.innerHTML = `<option value="">${gettext('Select...')}</option>`;
     S.ingredientes.forEach(i => {
       const o = document.createElement('option');
       o.value       = i.id;
@@ -265,7 +304,7 @@ async function cargarTodo() {
   // Categorías para modal de producto
   const cats = [...new Set(S.menu.map(c => c.categoria))];
   const sc   = document.getElementById('mp-cat');
-  sc.innerHTML = '<option value="">Seleccionar...</option>';
+  sc.innerHTML = `<option value="">${gettext('Select...')}</option>`;
   cats.forEach(c => {
     const o = document.createElement('option');
     o.value = c; o.textContent = c; sc.appendChild(o);
@@ -281,9 +320,13 @@ const MESAS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
 
 /** Renderiza el dashboard con mesas y órdenes activas */
 function renderDashboard() {
+  if (S.rol === 'cocina') {
+    renderPedidosCocina();
+    return;
+  }
   const activas = S.ordenes.filter(o => o.activa);
   document.getElementById('s-mesas').textContent  = activas.length;
-  document.getElementById('s-ventas').textContent = fmt(S.ventasHoy);
+  setCurrencyValue(document.getElementById('s-ventas'), S.ventasHoy);
   document.getElementById('s-ord').textContent    = S.ordenesHoy;
 
   // Grid de mesas
@@ -291,9 +334,9 @@ function renderDashboard() {
   g.innerHTML = '';
 
   const todasMesas = [
-    ...MESAS.map(n => ({ label: `Mesa ${n}`, key: `Mesa ${n}` })),
-    { label: '🛵 Para llevar A', key: 'Para llevar A' },
-    { label: '🛵 Para llevar B', key: 'Para llevar B' },
+    ...MESAS.map(n => ({ label: `${gettext('Table')} ${formatNumber(n)}`, key: `${gettext('Table')} ${n}` })),
+    { label: `🛵 ${gettext('Takeout')} A`, key: `${gettext('Takeout')} A` },
+    { label: `🛵 ${gettext('Takeout')} B`, key: `${gettext('Takeout')} B` },
   ];
 
   todasMesas.forEach(({ label, key }) => {
@@ -303,7 +346,7 @@ function renderDashboard() {
     d.innerHTML = `
       <div class="mesa-dot ${or ? 'dot-ocu' : 'dot-libre'}"></div>
       <div class="mesa-num">${label.replace('🛵 ', '')}</div>
-      <div class="mesa-lbl">${or ? 'Ocupada' : 'Libre'}</div>
+      <div class="mesa-lbl">${or ? gettext('Occupied') : gettext('Available')}</div>
       ${or ? `<div class="mesa-monto">${fmt(calcTotal(or))}</div>` : ''}
     `;
     d.onclick = () => or
@@ -317,7 +360,7 @@ function renderDashboard() {
   tb.innerHTML = '';
 
   if (!activas.length) {
-    tb.innerHTML = '<tr><td colspan="5" class="empty-s">Sin órdenes activas</td></tr>';
+    tb.innerHTML = `<tr><td colspan="5" class="empty-s">${gettext('No active orders')}</td></tr>`;
     return;
   }
 
@@ -325,18 +368,75 @@ function renderDashboard() {
     const tr = document.createElement('tr');
     tr.innerHTML = `
       <td><strong>${o.mesa}</strong></td>
-      <td>${o.items.length} items</td>
+      <td>${formatNumber(o.items.length)} ${gettext('items')}</td>
       <td>${fmt(calcTotal(o))}</td>
-      <td><span class="badge bg-amber">Abierta</span></td>
+      <td><span class="badge bg-amber">${gettext('Open')}</span></td>
       <td>
         <button class="btn btn-amber btn-sm"
           onclick="irAOrden(S.ordenes.find(x=>x.id===${o.id}))">
-          Abrir
+          ${gettext('Open order')}
         </button>
       </td>
     `;
     tb.appendChild(tr);
   });
+}
+
+async function cargarPedidosCocina() {
+  try {
+    S.ordenes = await apiFetch('/ventas/ordenes/pendientes-cocina/');
+    renderPedidosCocina();
+  } catch {
+    S.ordenes = [];
+    renderPedidosCocina();
+    toast(gettext('Could not load kitchen orders'), 'err');
+  }
+}
+
+function renderPedidosCocina() {
+  document.getElementById('dashboard-stats').style.display = 'none';
+  document.getElementById('dashboard-tables').style.display = 'none';
+  const section = document.getElementById('dashboard-orders');
+  section.style.display = '';
+  section.querySelector('p').textContent = gettext('Kitchen orders');
+  const table = section.querySelector('table');
+  table.querySelector('thead').innerHTML = `<tr><th>${gettext('Order')}</th><th>${gettext('Products')}</th><th>${gettext('State')}</th><th></th></tr>`;
+  const tbody = document.getElementById('dash-tbody');
+  tbody.replaceChildren();
+  if (!S.ordenes.length) {
+    tbody.innerHTML = `<tr><td colspan="4" class="empty-s">${gettext('No pending orders')}</td></tr>`;
+    return;
+  }
+  S.ordenes.forEach(order => {
+    const row = document.createElement('tr');
+    const reference = document.createElement('td');
+    reference.textContent = `${order.referencia} · #${order.id}`;
+    const items = document.createElement('td');
+    items.textContent = order.items.map(item => `${formatNumber(item.cantidad)}× ${item.producto}`).join(', ');
+    const state = document.createElement('td');
+    state.textContent = order.estado === 'abierta' ? gettext('Open') : gettext('In preparation');
+    const actionCell = document.createElement('td');
+    const button = document.createElement('button');
+    button.className = 'btn btn-amber btn-sm';
+    button.textContent = order.estado === 'abierta' ? gettext('Start preparation') : gettext('Mark ready');
+    button.addEventListener('click', () => avanzarPedidoCocina(order));
+    actionCell.appendChild(button);
+    row.append(reference, items, state, actionCell);
+    tbody.appendChild(row);
+  });
+}
+
+async function avanzarPedidoCocina(order) {
+  const nextState = order.estado === 'abierta' ? 'en_proceso' : 'lista';
+  try {
+    await apiFetch(`/ventas/ordenes/${order.id}/cambiar-estado/`, {
+      method: 'POST',
+      body: JSON.stringify({ estado: nextState }),
+    });
+    await cargarPedidosCocina();
+  } catch {
+    toast(gettext('Could not update order state'), 'err');
+  }
 }
 
 /* ══════════════════════════════════════
@@ -350,7 +450,7 @@ function abrirModalOrden() {
 
 /** Crea una nueva orden y la abre */
 function crearOrden() {
-  const mesa  = document.getElementById('mo-mesa').value.trim() || 'Sin nombre';
+  const mesa  = document.getElementById('mo-mesa').value.trim() || gettext('Unnamed');
   const empId = document.getElementById('mo-emp').value;
   cerrarModal('modal-orden');
 
@@ -443,7 +543,7 @@ function renderTicket() {
   c.innerHTML = '';
 
   if (!o.items.length) {
-    c.innerHTML = '<p class="empty-s">Sin productos</p>';
+    c.innerHTML = `<p class="empty-s">${gettext('No products')}</p>`;
   } else {
     o.items.forEach((item, i) => {
       const r = document.createElement('div');
@@ -451,7 +551,7 @@ function renderTicket() {
       r.innerHTML = `
         <div class="qw">
           <button class="qb" onclick="cambiarQty(${i}, -1)">−</button>
-          <span class="qn">${item.qty}</span>
+          <span class="qn">${formatNumber(item.qty)}</span>
           <button class="qb" onclick="cambiarQty(${i}, 1)">+</button>
         </div>
         <span class="t-n">${item.nombre}</span>
@@ -461,7 +561,7 @@ function renderTicket() {
     });
   }
 
-  document.getElementById('tk-total').textContent = fmt(calcTotal(o));
+  setCurrencyValue(document.getElementById('tk-total'), calcTotal(o));
   renderDashboard();
 }
 
@@ -472,16 +572,16 @@ function renderTicket() {
 /** Abre el overlay de cobro */
 function abrirCobro() {
   const o = S.ordenActual;
-  if (!o.items.length) { toast('Agrega al menos un producto', 'err'); return; }
+  if (!o.items.length) { toast(gettext('Add at least one product'), 'err'); return; }
 
-  document.getElementById('cobro-tot').textContent = fmt(calcTotal(o));
+  setCurrencyValue(document.getElementById('cobro-tot'), calcTotal(o));
 
   const lista = document.getElementById('cobro-items');
   lista.innerHTML = '';
   o.items.forEach(i => {
     const r = document.createElement('div');
     r.className = 'cobro-row';
-    r.innerHTML = `<span>${i.qty}× ${i.nombre}</span><span>${fmt(i.precio * i.qty)}</span>`;
+    r.innerHTML = `<span>${formatNumber(i.qty)}× ${i.nombre}</span><span>${fmt(i.precio * i.qty)}</span>`;
     lista.appendChild(r);
   });
 
@@ -517,7 +617,7 @@ function calcCambio() {
 
   if (pago >= total) {
     blk.style.display = 'block';
-    document.getElementById('cambio-v').textContent = fmt(pago - total);
+    setCurrencyValue(document.getElementById('cambio-v'), pago - total);
   } else {
     blk.style.display = 'none';
   }
@@ -548,7 +648,7 @@ async function confirmarPago() {
 
   cerrarCobro();
   mostrarTicket(o, total, pagoCon);
-  document.getElementById('s-ventas').textContent = fmt(S.ventasHoy);
+  setCurrencyValue(document.getElementById('s-ventas'), S.ventasHoy);
   document.getElementById('s-ord').textContent    = S.ordenesHoy;
 }
 
@@ -559,44 +659,44 @@ async function confirmarPago() {
  * @param {number} pagoCon - Cantidad entregada por el cliente
  */
 function mostrarTicket(o, total, pagoCon) {
-  const fecha = new Date().toLocaleString('es-MX', {
+  const fecha = formatDateTime(new Date(), {
     day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit',
   });
 
   let h = `
-    <h3 class="tp-h3">🌮 TAQUERÍA ERP</h3>
+    <h3 class="tp-h3">🌮 ${gettext('TAQUERIA ERP')}</h3>
     <span class="tp-s">${fecha} · ${o.mesa}</span>
     <hr class="ti-div">
   `;
 
   o.items.forEach(i => {
-    h += `<div class="ti-r"><span>${i.qty}× ${i.nombre}</span><span>${fmt(i.precio * i.qty)}</span></div>`;
+    h += `<div class="ti-r"><span>${formatNumber(i.qty)}× ${i.nombre}</span><span>${fmt(i.precio * i.qty)}</span></div>`;
   });
 
   h += `
     <hr class="ti-div">
-    <div class="ti-tot"><span>TOTAL</span><span>${fmt(total)}</span></div>
-    <div class="ti-r" style="color:#777;margin-top:3px"><span>Pago: ${S.metodo}</span></div>
+    <div class="ti-tot"><span>${gettext('TOTAL')}</span><span>${fmt(total)}</span></div>
+    <div class="ti-r" style="color:#777;margin-top:3px"><span>${gettext('Payment')}: ${formatPaymentMethod(S.metodo)}</span></div>
   `;
 
   if (S.metodo === 'efectivo') {
     h += `
-      <div class="ti-r" style="color:#777"><span>Entregó:</span><span>${fmt(pagoCon)}</span></div>
-      <div class="ti-r" style="color:#777"><span>Cambio:</span><span>${fmt(pagoCon - total)}</span></div>
+      <div class="ti-r" style="color:#777"><span>${gettext('Paid with:')}</span><span>${fmt(pagoCon)}</span></div>
+      <div class="ti-r" style="color:#777"><span>${gettext('Change:')}</span><span>${fmt(pagoCon - total)}</span></div>
     `;
   }
 
-  h += `<div class="ti-ty">¡Gracias por su visita!</div>`;
+  h += `<div class="ti-ty">${gettext('Thank you for visiting!')}</div>`;
 
   document.getElementById('ticket-papel').innerHTML = h;
-  document.getElementById('tp-sub').textContent     = `${o.mesa} · ${fmt(total)} · ${S.metodo}`;
+  document.getElementById('tp-sub').textContent     = `${o.mesa} · ${fmt(total)} · ${formatPaymentMethod(S.metodo)}`;
   document.getElementById('ticket-ov').classList.add('open');
 }
 
 /** Cierra el ticket y vuelve al dashboard */
 function cerrarTicket() {
   document.getElementById('ticket-ov').classList.remove('open');
-  toast('Orden cobrada y enviada a reportes ✓', 'ok');
+  toast(gettext('Order paid and sent to reports ✓'), 'ok');
   navTo('dashboard', document.querySelector('[data-page="dashboard"]'));
 }
 
@@ -618,13 +718,13 @@ function cargarMenuAdmin() {
         <td>${fmt(p.precio)}</td>
         <td>
           <span class="badge ${p.disponible !== false ? 'bg-green' : 'bg-red'}">
-            ${p.disponible !== false ? 'Sí' : 'No'}
+            ${p.disponible !== false ? gettext('Yes') : gettext('No')}
           </span>
         </td>
         <td>
           <button class="btn btn-ghost btn-sm"
             onclick="editarProd(${p.id}, '${cat.categoria}')">
-            Editar
+            ${gettext('Edit')}
           </button>
         </td>
       `;
@@ -638,7 +738,7 @@ let editProdId = null;
 /** Abre el modal para agregar un nuevo producto */
 function abrirModalProd() {
   editProdId = null;
-  document.getElementById('mprod-title').textContent = 'Nuevo producto';
+  document.getElementById('mprod-title').textContent = gettext('New product');
   ['mp-n', 'mp-p'].forEach(id => { document.getElementById(id).value = ''; });
   abrirModal('modal-prod');
 }
@@ -654,7 +754,7 @@ function editarProd(id, cat) {
   S.menu.forEach(c => c.productos.forEach(p => { if (p.id === id) prod = p; }));
   if (!prod) return;
 
-  document.getElementById('mprod-title').textContent = 'Editar producto';
+  document.getElementById('mprod-title').textContent = gettext('Edit product');
   document.getElementById('mp-n').value   = prod.nombre;
   document.getElementById('mp-p').value   = prod.precio;
   document.getElementById('mp-cat').value = cat;
@@ -669,7 +769,7 @@ async function guardarProducto() {
   const c   = document.getElementById('mp-cat').value;
   const disp = document.getElementById('mp-d').value === 'true';
 
-  if (!n || !p) { toast('Completa todos los campos', 'err'); return; }
+  if (!n || !p) { toast(gettext('Complete all fields'), 'err'); return; }
 
   if (editProdId) {
     // Editar producto existente
@@ -682,7 +782,7 @@ async function guardarProducto() {
         body:   JSON.stringify({ nombre: n, precio: parseFloat(p), disponible: disp }),
       });
     } catch { /* continuar */ }
-    toast('Producto actualizado', 'ok');
+    toast(gettext('Product updated'), 'ok');
   } else {
     // Nuevo producto
     const id  = Date.now();
@@ -698,7 +798,7 @@ async function guardarProducto() {
         body:   JSON.stringify({ nombre: n, precio: parseFloat(p), disponible: true, categoria_nombre: c }),
       });
     } catch { /* continuar */ }
-    toast('Producto agregado', 'ok');
+    toast(gettext('Product added'), 'ok');
   }
 
   cerrarModal('modal-prod');
@@ -732,15 +832,15 @@ async function cargarInventario() {
       <td><strong>${i.nombre}</strong></td>
       <td><span class="badge bg-muted">${i.unidad}</span></td>
       <td>
-        ${act}
+        ${formatNumber(act)}
         <div class="stock-bar">
           <div class="stock-fill" style="width:${pct}%;background:${color}"></div>
         </div>
       </td>
-      <td>${min}</td>
+      <td>${formatNumber(min)}</td>
       <td>
         <span class="badge ${bajo ? 'bg-red' : amarillo ? 'bg-amber' : 'bg-green'}">
-          ${bajo ? '⚠ Bajo' : amarillo ? 'Bajo' : 'OK'}
+          ${bajo ? `⚠ ${gettext('Low stock')}` : amarillo ? gettext('Low stock') : gettext('OK')}
         </span>
       </td>
     `;
@@ -754,7 +854,7 @@ async function guardarEntrada() {
   const qty = parseFloat(document.getElementById('me-q').value);
   const c   = parseFloat(document.getElementById('me-c').value) || 0;
 
-  if (!id || !qty) { toast('Completa los campos requeridos', 'err'); return; }
+  if (!id || !qty) { toast(gettext('Complete the required fields'), 'err'); return; }
 
   const ing = S.ingredientes.find(i => String(i.id) === id);
   if (ing) ing.stock_actual = String(parseFloat(ing.stock_actual || 0) + qty);
@@ -764,9 +864,9 @@ async function guardarEntrada() {
       method: 'POST',
       body:   JSON.stringify({ ingrediente_id: parseInt(id), cantidad: qty, costo_unitario: c, notas: '' }),
     });
-    toast('Entrada registrada', 'ok');
+    toast(gettext('Stock entry recorded'), 'ok');
   } catch {
-    toast('Guardado localmente', '');
+    toast(gettext('Saved locally'), '');
   }
 
   cerrarModal('modal-entrada');
@@ -779,12 +879,12 @@ async function guardarSalida() {
   const qty = parseFloat(document.getElementById('ms-q').value);
   const m   = document.getElementById('ms-m').value;
 
-  if (!id || !qty) { toast('Completa los campos requeridos', 'err'); return; }
+  if (!id || !qty) { toast(gettext('Complete the required fields'), 'err'); return; }
 
   const ing = S.ingredientes.find(i => String(i.id) === id);
   if (ing) {
     const nuevo = parseFloat(ing.stock_actual || 0) - qty;
-    if (nuevo < 0) { toast('Stock insuficiente', 'err'); return; }
+    if (nuevo < 0) { toast(gettext('Insufficient stock'), 'err'); return; }
     ing.stock_actual = String(nuevo);
   }
 
@@ -793,9 +893,9 @@ async function guardarSalida() {
       method: 'POST',
       body:   JSON.stringify({ ingrediente_id: parseInt(id), cantidad: qty, motivo: m }),
     });
-    toast('Salida registrada', 'ok');
+    toast(gettext('Stock withdrawal recorded'), 'ok');
   } catch {
-    toast('Guardado localmente', '');
+    toast(gettext('Saved locally'), '');
   }
 
   cerrarModal('modal-salida');
@@ -829,13 +929,13 @@ async function cargarEmpleados() {
         </div>
       </div>
       <span class="badge ${e.activo !== false ? 'bg-green' : 'bg-red'}" style="margin-top:7px">
-        ${e.activo !== false ? 'Activo' : 'Inactivo'}
+        ${e.activo !== false ? gettext('Active') : gettext('Inactive')}
       </span>
     `;
     g.appendChild(c);
   });
 
-  if (!S.empleados.length) g.innerHTML = '<p class="empty-s">Sin empleados registrados</p>';
+  if (!S.empleados.length) g.innerHTML = `<p class="empty-s">${gettext('No employees registered')}</p>`;
 }
 
 /** Guarda un nuevo empleado */
@@ -843,7 +943,7 @@ async function guardarEmpleado() {
   const n = document.getElementById('mep-n').value.trim();
   const a = document.getElementById('mep-a').value.trim();
 
-  if (!n || !a) { toast('Nombre y apellido requeridos', 'err'); return; }
+  if (!n || !a) { toast(gettext('First and last name are required'), 'err'); return; }
 
   const obj = {
     id:       Date.now(),
@@ -858,9 +958,9 @@ async function guardarEmpleado() {
 
   try {
     await apiFetch('/empleados/empleados/', { method: 'POST', body: JSON.stringify(obj) });
-    toast('Empleado agregado', 'ok');
+    toast(gettext('Employee added'), 'ok');
   } catch {
-    toast('Guardado localmente', '');
+    toast(gettext('Saved locally'), '');
   }
 
   cerrarModal('modal-emp');
@@ -903,11 +1003,11 @@ async function cargarReportes() {
 async function generarReporte() {
   try {
     await apiFetch('/reportes/ventas-diarias/generar/', { method: 'POST' });
-    toast('Reporte actualizado', 'ok');
+    toast(gettext('Report updated'), 'ok');
     cargarReportes();
   } catch {
     renderReportesDemo();
-    toast('Modo demo', '');
+    toast(gettext('Demo mode'), '');
   }
 }
 
@@ -919,12 +1019,12 @@ function renderReportes(lista) {
   if (!lista || !lista.length) { renderReportesDemo(); return; }
 
   const hoy = lista[0];
-  document.getElementById('r-total').textContent = fmt(hoy.total_ventas);
+  setCurrencyValue(document.getElementById('r-total'), hoy.total_ventas);
   document.getElementById('r-ords').textContent  = hoy.total_ordenes;
-  document.getElementById('r-efec').textContent  = fmt(hoy.total_efectivo);
+  setCurrencyValue(document.getElementById('r-efec'), hoy.total_efectivo);
 
   const dig = parseFloat(hoy.total_tarjeta || 0) + parseFloat(hoy.total_transferencia || 0);
-  document.getElementById('r-dig').textContent = fmt(dig);
+  setCurrencyValue(document.getElementById('r-dig'), dig);
   document.getElementById('s-top').textContent = hoy.producto_mas_vendido || '—';
 
   dibujarGraficas(lista);
@@ -933,10 +1033,10 @@ function renderReportes(lista) {
 
 /** Renderiza reportes con datos de demostración */
 function renderReportesDemo() {
-  document.getElementById('r-total').textContent = fmt(S.ventasHoy || 1450);
+  setCurrencyValue(document.getElementById('r-total'), S.ventasHoy || 1450);
   document.getElementById('r-ords').textContent  = S.ordenesHoy  || 28;
-  document.getElementById('r-efec').textContent  = fmt(980);
-  document.getElementById('r-dig').textContent   = fmt(470);
+  setCurrencyValue(document.getElementById('r-efec'), 980);
+  setCurrencyValue(document.getElementById('r-dig'), 470);
 
   const demo    = generarDemoData();
   S.reporteData = demo;
@@ -955,7 +1055,7 @@ function generarDemoData() {
     total_efectivo:       tots[i] * 0.65,
     total_tarjeta:        tots[i] * 0.25,
     total_transferencia:  tots[i] * 0.10,
-    producto_mas_vendido: 'Taco al pastor',
+    producto_mas_vendido: gettext('Taco al pastor'),
   }));
 }
 
@@ -971,7 +1071,7 @@ function dibujarGraficas(lista) {
   S.charts['metodo'] = new Chart(document.getElementById('chart-metodo'), {
     type: 'bar',
     data: {
-      labels:   ['Efectivo', 'Tarjeta', 'Transfer.'],
+      labels:   [gettext('Cash'), gettext('Card'), gettext('Transfer')],
       datasets: [{
         data: [
           parseFloat(hoy.total_efectivo      || 0),
@@ -988,7 +1088,7 @@ function dibujarGraficas(lista) {
       responsive: true, maintainAspectRatio: false,
       plugins: { legend: { display: false } },
       scales: {
-        y: { ticks: { callback: v => '$' + v }, grid: { color: 'rgba(255,255,255,0.04)' } },
+        y: { ticks: { callback: v => fmt(v) }, grid: { color: 'rgba(255,255,255,0.04)' } },
         x: { grid: { display: false } },
       },
     },
@@ -996,14 +1096,14 @@ function dibujarGraficas(lista) {
 
   // 2. Línea tendencia semanal
   destroyChart('semana');
-  const l7 = lista.slice(0, 7).reverse().map(r => r.fecha?.slice(5) || '');
+  const l7 = lista.slice(0, 7).reverse().map(r => formatDate(r.fecha));
   const v7 = lista.slice(0, 7).reverse().map(r => parseFloat(r.total_ventas || 0));
   S.charts['semana'] = new Chart(document.getElementById('chart-semana'), {
     type: 'line',
     data: {
       labels:   l7,
       datasets: [{
-        data: v7, label: 'Ventas',
+        data: v7, label: gettext('Sales'),
         borderColor:     '#EF9F27',
         backgroundColor: 'rgba(239,159,39,0.1)',
         fill: true, tension: 0.4,
@@ -1014,7 +1114,7 @@ function dibujarGraficas(lista) {
       responsive: true, maintainAspectRatio: false,
       plugins: { legend: { display: false } },
       scales: {
-        y: { ticks: { callback: v => '$' + v }, grid: { color: 'rgba(255,255,255,0.04)' } },
+        y: { ticks: { callback: v => fmt(v) }, grid: { color: 'rgba(255,255,255,0.04)' } },
         x: { grid: { display: false } },
       },
     },
@@ -1028,7 +1128,7 @@ function dibujarGraficas(lista) {
   );
   const pl = Object.keys(pm).length
     ? Object.keys(pm).slice(0, 6)
-    : ['Taco al pastor', 'Quesadilla', 'Taco bistec', 'Agua fresca', 'Taco suadero', 'Refresco'];
+    : [gettext('Taco al pastor'), gettext('Quesadilla'), gettext('Taco de bistec'), gettext('Fresh water'), gettext('Taco de suadero'), gettext('Soda')];
   const pv = Object.keys(pm).length
     ? Object.values(pm).slice(0, 6)
     : [45, 28, 22, 18, 15, 12];
@@ -1057,7 +1157,7 @@ function dibujarGraficas(lista) {
   S.charts['donut'] = new Chart(document.getElementById('chart-donut'), {
     type: 'doughnut',
     data: {
-      labels: ['Efectivo', 'Tarjeta', 'Transfer.'],
+      labels: [gettext('Cash'), gettext('Card'), gettext('Transfer')],
       datasets: [{
         data: [
           parseFloat(hoy.total_efectivo      || 980),
@@ -1087,7 +1187,7 @@ function renderTablaReportes(lista) {
   lista.forEach(r => {
     const tr = document.createElement('tr');
     tr.innerHTML = `
-      <td>${r.fecha}</td>
+      <td>${formatDate(r.fecha)}</td>
       <td>${r.total_ordenes}</td>
       <td><strong>${fmt(r.total_ventas)}</strong></td>
       <td>${fmt(r.total_efectivo)}</td>
@@ -1099,7 +1199,7 @@ function renderTablaReportes(lista) {
   });
 
   if (!lista.length) {
-    tb.innerHTML = '<tr><td colspan="7" class="empty-s">Sin reportes aún</td></tr>';
+    tb.innerHTML = `<tr><td colspan="7" class="empty-s">${gettext('No reports yet')}</td></tr>`;
   }
 }
 
@@ -1113,48 +1213,48 @@ function exportarExcel() {
 
   // Hoja 1: Ventas diarias
   const resumen = [
-    ['TAQUERÍA ERP — Reporte de Ventas'],
-    ['Generado:', new Date().toLocaleString('es-MX')],
+    [gettext('TAQUERIA ERP — Sales Report')],
+    [gettext('Generated:'), formatDateTime(new Date())],
     [],
-    ['Fecha', 'Órdenes', 'Total', 'Efectivo', 'Tarjeta', 'Transfer.', 'Más vendido'],
+    [gettext('Date'), gettext('Orders'), gettext('Total'), gettext('Cash'), gettext('Card'), gettext('Transfer'), gettext('Best seller')],
   ];
   S.reporteData.forEach(r => resumen.push([
-    r.fecha, r.total_ordenes,
-    parseFloat(r.total_ventas       || 0),
-    parseFloat(r.total_efectivo     || 0),
-    parseFloat(r.total_tarjeta      || 0),
-    parseFloat(r.total_transferencia|| 0),
+    formatDate(r.fecha), formatNumber(r.total_ordenes),
+    fmt(r.total_ventas || 0),
+    fmt(r.total_efectivo || 0),
+    fmt(r.total_tarjeta || 0),
+    fmt(r.total_transferencia || 0),
     r.producto_mas_vendido || '—',
   ]));
   const ws1 = XLSX.utils.aoa_to_sheet(resumen);
   ws1['!cols'] = [{ wch: 14 }, { wch: 10 }, { wch: 14 }, { wch: 14 }, { wch: 14 }, { wch: 14 }, { wch: 20 }];
-  XLSX.utils.book_append_sheet(wb, ws1, 'Ventas Diarias');
+  XLSX.utils.book_append_sheet(wb, ws1, gettext('Daily Sales'));
 
   // Hoja 2: Inventario
-  const invData = [['Ingrediente', 'Unidad', 'Stock Actual', 'Mínimo', 'Estado']];
+  const invData = [[gettext('Ingredient'), gettext('Unit'), gettext('Current Stock'), gettext('Minimum'), gettext('Status')]];
   S.ingredientes.forEach(i => {
     const a = parseFloat(i.stock_actual || 0);
     const m = parseFloat(i.stock_minimo || 0);
-    invData.push([i.nombre, i.unidad, a, m, a <= m ? '⚠ Bajo' : a <= m * 1.5 ? 'Bajo' : 'OK']);
+    invData.push([i.nombre, i.unidad, formatNumber(a), formatNumber(m), a <= m ? `⚠ ${gettext('Low stock')}` : a <= m * 1.5 ? gettext('Low stock') : gettext('OK')]);
   });
   const ws2 = XLSX.utils.aoa_to_sheet(invData);
   ws2['!cols'] = [{ wch: 20 }, { wch: 10 }, { wch: 14 }, { wch: 14 }, { wch: 14 }];
-  XLSX.utils.book_append_sheet(wb, ws2, 'Inventario');
+  XLSX.utils.book_append_sheet(wb, ws2, gettext('Inventory'));
 
   // Hoja 3: Órdenes del día
-  const ordsData = [['Mesa/Cliente', 'Productos', 'Total', 'Estado']];
+  const ordsData = [[gettext('Table/Customer'), gettext('Products'), gettext('Total'), gettext('Status')]];
   S.ordenes.forEach(o => ordsData.push([
     o.mesa,
-    o.items.map(i => `${i.qty}x ${i.nombre}`).join(', '),
-    calcTotal(o).toFixed(2),
-    o.activa ? 'Abierta' : 'Cobrada',
+    o.items.map(i => `${formatNumber(i.qty)}x ${i.nombre}`).join(', '),
+    fmt(calcTotal(o)),
+    o.activa ? gettext('Open') : gettext('Paid'),
   ]));
   const ws3 = XLSX.utils.aoa_to_sheet(ordsData);
   ws3['!cols'] = [{ wch: 18 }, { wch: 40 }, { wch: 12 }, { wch: 10 }];
-  XLSX.utils.book_append_sheet(wb, ws3, 'Órdenes del día');
+  XLSX.utils.book_append_sheet(wb, ws3, gettext('Daily Orders'));
 
   XLSX.writeFile(wb, `reporte_taqueria_${new Date().toISOString().slice(0, 10)}.xlsx`);
-  toast('Excel descargado ✓', 'ok');
+  toast(gettext('Excel downloaded ✓'), 'ok');
 }
 
 /* ══════════════════════════════════════
@@ -1162,94 +1262,26 @@ function exportarExcel() {
 ══════════════════════════════════════ */
 
 /** Exporta los reportes a un archivo PDF con tablas y gráficas */
-function exportarPDF() {
-  const { jsPDF } = window.jspdf;
-  const doc       = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
-  const fecha     = new Date().toLocaleString('es-MX', { day: '2-digit', month: 'long', year: 'numeric' });
-
-  // Encabezado
-  doc.setFillColor(239, 159, 39);
-  doc.rect(0, 0, 210, 26, 'F');
-  doc.setTextColor(26, 19, 0);
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(20);
-  doc.text('TAQUERÍA ERP', 14, 13);
-  doc.setFontSize(9);
-  doc.text(`Reporte de Ventas — ${fecha}`, 14, 21);
-
-  // Stats del día
-  doc.setFillColor(30, 28, 24);
-  doc.rect(0, 26, 210, 28, 'F');
-  const statsX = [14, 62, 110, 158];
-  const statsL = ['Total ventas', 'Órdenes', 'Efectivo', 'Tarjeta+Transfer.'];
-  const statsV = [
-    document.getElementById('r-total').textContent,
-    document.getElementById('r-ords').textContent,
-    document.getElementById('r-efec').textContent,
-    document.getElementById('r-dig').textContent,
-  ];
-  statsX.forEach((x, i) => {
-    doc.setFont('helvetica', 'normal'); doc.setFontSize(7); doc.setTextColor(160, 156, 148);
-    doc.text(statsL[i], x, 34);
-    doc.setFont('helvetica', 'bold'); doc.setFontSize(13); doc.setTextColor(239, 159, 39);
-    doc.text(statsV[i], x, 45);
-  });
-
-  // Tabla historial
-  doc.autoTable({
-    startY: 62,
-    head: [['Fecha', 'Órdenes', 'Total', 'Efectivo', 'Tarjeta', 'Transfer.', 'Más vendido']],
-    body: S.reporteData.map(r => [
-      r.fecha, r.total_ordenes,
-      fmt(r.total_ventas), fmt(r.total_efectivo),
-      fmt(r.total_tarjeta || 0), fmt(r.total_transferencia || 0),
-      r.producto_mas_vendido || '—',
-    ]),
-    headStyles:          { fillColor: [239, 159, 39], textColor: [26, 19, 0], fontStyle: 'bold', fontSize: 7 },
-    bodyStyles:          { fontSize: 7 },
-    alternateRowStyles:  { fillColor: [245, 242, 235] },
-    styles:              { cellPadding: 2.5 },
-    margin:              { left: 14, right: 14 },
-  });
-
-  let y = doc.lastAutoTable.finalY + 10;
-
-  // Gráfica de métodos de pago
-  if (y < 220) {
-    doc.setFont('helvetica', 'bold'); doc.setFontSize(9); doc.setTextColor(30, 28, 24);
-    doc.text('Distribución por método de pago', 14, y);
-    y += 5;
-
-    const hoy  = S.reporteData[0] || {};
-    const mets = [
-      { label: 'Efectivo',  val: parseFloat(hoy.total_efectivo      || 980), color: [239, 159, 39] },
-      { label: 'Tarjeta',   val: parseFloat(hoy.total_tarjeta       || 360), color: [59,  130, 246] },
-      { label: 'Transfer.', val: parseFloat(hoy.total_transferencia || 110), color: [90,  158,  31] },
-    ];
-    const maxV = Math.max(...mets.map(m => m.val), 1);
-
-    mets.forEach(m => {
-      const pct = m.val / maxV;
-      doc.setFillColor(220, 218, 214); doc.rect(14, y, 130, 6, 'F');
-      doc.setFillColor(...m.color);    doc.rect(14, y, 130 * pct, 6, 'F');
-      doc.setFont('helvetica', 'normal'); doc.setFontSize(7); doc.setTextColor(30, 28, 24);
-      doc.text(m.label, 14, y + 10);
-      doc.setFont('helvetica', 'bold');
-      doc.text(fmt(m.val), 148, y + 4);
-      y += 16;
+async function exportarPDF() {
+  if (S.rol !== 'admin') {
+    toast(gettext('You do not have permission to export historical reports'), 'err');
+    return;
+  }
+  try {
+    const response = await fetch(`${API}/reportes/ventas-diarias/pdf/`, {
+      headers: { Authorization: `Bearer ${S.token}` },
     });
+    if (!response.ok) throw new Error('PDF export denied');
+    const blob = await response.blob();
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = 'taqueria-sales-reports.pdf';
+    link.click();
+    URL.revokeObjectURL(link.href);
+    toast(gettext('PDF downloaded ✓'), 'ok');
+  } catch {
+    toast(gettext('Could not download PDF'), 'err');
   }
-
-  // Pie de página
-  const pages = doc.internal.getNumberOfPages();
-  for (let i = 1; i <= pages; i++) {
-    doc.setPage(i);
-    doc.setFontSize(7); doc.setTextColor(160, 156, 148);
-    doc.text(`Taquería ERP — ${fecha} — Pág ${i}/${pages}`, 14, 290);
-  }
-
-  doc.save(`reporte_taqueria_${new Date().toISOString().slice(0, 10)}.pdf`);
-  toast('PDF descargado ✓', 'ok');
 }
 
 /* ══════════════════════════════════════

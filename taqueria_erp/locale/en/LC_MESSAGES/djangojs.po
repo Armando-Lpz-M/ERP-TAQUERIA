@@ -1,0 +1,371 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+# 
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-10-25 17:02-0600\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: en\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: .\static\js\erp.js:60 .\static\js\erp.js:991 .\static\js\erp.js:1077
+#: .\static\js\erp.js:1136 .\static\js\erp.js:1201 .\static\js\erp.js:1218
+#: .\static\js\erp.js:1242
+msgid "Cash"
+msgstr "Cash"
+
+#: .\static\js\erp.js:61 .\static\js\erp.js:991 .\static\js\erp.js:1077
+#: .\static\js\erp.js:1136 .\static\js\erp.js:1218 .\static\js\erp.js:1243
+msgid "Card"
+msgstr "Card"
+
+#: .\static\js\erp.js:62 .\static\js\erp.js:991 .\static\js\erp.js:1077
+#: .\static\js\erp.js:1136 .\static\js\erp.js:1218 .\static\js\erp.js:1244
+msgid "Transfer"
+msgstr "Transfer"
+
+#: .\static\js\erp.js:177
+msgid "Tacos"
+msgstr "Tacos"
+
+#: .\static\js\erp.js:179 .\static\js\erp.js:975 .\static\js\erp.js:1048
+msgid "Taco al pastor"
+msgstr "Taco al pastor"
+
+#: .\static\js\erp.js:180 .\static\js\erp.js:1048
+msgid "Taco de bistec"
+msgstr "Steak taco"
+
+#: .\static\js\erp.js:181 .\static\js\erp.js:1048
+msgid "Taco de suadero"
+msgstr "Suadero taco"
+
+#: .\static\js\erp.js:182
+msgid "Taco de tripa"
+msgstr "Tripe taco"
+
+#: .\static\js\erp.js:186
+msgid "Quesadillas"
+msgstr "Quesadillas"
+
+#: .\static\js\erp.js:188
+msgid "Cheese quesadilla"
+msgstr "Cheese quesadilla"
+
+#: .\static\js\erp.js:189
+msgid "Meat quesadilla"
+msgstr "Meat quesadilla"
+
+#: .\static\js\erp.js:193
+msgid "Drinks"
+msgstr "Drinks"
+
+#: .\static\js\erp.js:195 .\static\js\erp.js:1048
+msgid "Fresh water"
+msgstr "Fresh water"
+
+#: .\static\js\erp.js:196 .\static\js\erp.js:1048
+msgid "Soda"
+msgstr "Soda"
+
+#: .\static\js\erp.js:200
+msgid "Extras"
+msgstr "Extras"
+
+#: .\static\js\erp.js:202
+msgid "Guacamole"
+msgstr "Guacamole"
+
+#: .\static\js\erp.js:203
+msgid "Tostada"
+msgstr "Tostada"
+
+#: .\static\js\erp.js:243
+msgid "Menu in demo mode"
+msgstr "Menu in demo mode"
+
+#: .\static\js\erp.js:259
+msgid "Unassigned"
+msgstr "Unassigned"
+
+#: .\static\js\erp.js:273 .\static\js\erp.js:285
+msgid "Select..."
+msgstr "Select..."
+
+#: .\static\js\erp.js:311
+msgid "Table"
+msgstr "Table"
+
+#: .\static\js\erp.js:312 .\static\js\erp.js:313
+msgid "Takeout"
+msgstr "Takeout"
+
+#: .\static\js\erp.js:323
+msgid "Occupied"
+msgstr "Occupied"
+
+#: .\static\js\erp.js:323
+msgid "Available"
+msgstr "Available"
+
+#: .\static\js\erp.js:337
+msgid "No active orders"
+msgstr "No active orders"
+
+#: .\static\js\erp.js:345
+msgid "items"
+msgstr "items"
+
+#: .\static\js\erp.js:347 .\static\js\erp.js:1167
+msgid "Open"
+msgstr "Open"
+
+#: .\static\js\erp.js:351
+msgid "Open order"
+msgstr "Open order"
+
+#: .\static\js\erp.js:370
+msgid "Unnamed"
+msgstr "Unnamed"
+
+#: .\static\js\erp.js:463
+msgid "No products"
+msgstr "No products"
+
+#: .\static\js\erp.js:492
+msgid "Add at least one product"
+msgstr "Add at least one product"
+
+#: .\static\js\erp.js:584 .\static\js\erp.js:1193 .\static\js\erp.js:1265
+msgid "TAQUERIA ERP"
+msgstr "TAQUERIA ERP"
+
+#: .\static\js\erp.js:595
+msgid "TOTAL"
+msgstr "TOTAL"
+
+#: .\static\js\erp.js:596
+msgid "Payment"
+msgstr "Payment"
+
+#: .\static\js\erp.js:601
+msgid "Paid with:"
+msgstr "Paid with:"
+
+#: .\static\js\erp.js:602
+msgid "Change:"
+msgstr "Change:"
+
+#: .\static\js\erp.js:606
+msgid "Thank you for visiting!"
+msgstr "Thank you for visiting!"
+
+#: .\static\js\erp.js:616
+msgid "Order paid and sent to reports ✓"
+msgstr "Order paid and sent to reports ✓"
+
+#: .\static\js\erp.js:638
+msgid "Yes"
+msgstr "Yes"
+
+#: .\static\js\erp.js:638
+msgid "No"
+msgstr "No"
+
+#: .\static\js\erp.js:644
+msgid "Edit"
+msgstr "Edit"
+
+#: .\static\js\erp.js:658
+msgid "New product"
+msgstr "New product"
+
+#: .\static\js\erp.js:674
+msgid "Edit product"
+msgstr "Edit product"
+
+#: .\static\js\erp.js:689
+msgid "Complete all fields"
+msgstr "Complete all fields"
+
+#: .\static\js\erp.js:702
+msgid "Product updated"
+msgstr "Product updated"
+
+#: .\static\js\erp.js:718
+msgid "Product added"
+msgstr "Product added"
+
+#: .\static\js\erp.js:760 .\static\js\erp.js:1155
+msgid "Low stock"
+msgstr "Low stock"
+
+#: .\static\js\erp.js:760 .\static\js\erp.js:1155
+msgid "OK"
+msgstr "OK"
+
+#: .\static\js\erp.js:774 .\static\js\erp.js:799
+msgid "Complete the required fields"
+msgstr "Complete the required fields"
+
+#: .\static\js\erp.js:784
+msgid "Stock entry recorded"
+msgstr "Stock entry recorded"
+
+#: .\static\js\erp.js:786 .\static\js\erp.js:815 .\static\js\erp.js:880
+msgid "Saved locally"
+msgstr "Saved locally"
+
+#: .\static\js\erp.js:804
+msgid "Insufficient stock"
+msgstr "Insufficient stock"
+
+#: .\static\js\erp.js:813
+msgid "Stock withdrawal recorded"
+msgstr "Stock withdrawal recorded"
+
+#: .\static\js\erp.js:849
+msgid "Active"
+msgstr "Active"
+
+#: .\static\js\erp.js:849
+msgid "Inactive"
+msgstr "Inactive"
+
+#: .\static\js\erp.js:855
+msgid "No employees registered"
+msgstr "No employees registered"
+
+#: .\static\js\erp.js:863
+msgid "First and last name are required"
+msgstr "First and last name are required"
+
+#: .\static\js\erp.js:878
+msgid "Employee added"
+msgstr "Employee added"
+
+#: .\static\js\erp.js:923
+msgid "Report updated"
+msgstr "Report updated"
+
+#: .\static\js\erp.js:927
+msgid "Demo mode"
+msgstr "Demo mode"
+
+#: .\static\js\erp.js:1023
+msgid "Sales"
+msgstr "Sales"
+
+#: .\static\js\erp.js:1048
+msgid "Quesadilla"
+msgstr "Quesadilla"
+
+#: .\static\js\erp.js:1119
+msgid "No reports yet"
+msgstr "No reports yet"
+
+#: .\static\js\erp.js:1133
+msgid "TAQUERIA ERP — Sales Report"
+msgstr "TAQUERIA ERP — Sales Report"
+
+#: .\static\js\erp.js:1134
+msgid "Generated:"
+msgstr "Generated:"
+
+#: .\static\js\erp.js:1136 .\static\js\erp.js:1218
+msgid "Date"
+msgstr "Date"
+
+#: .\static\js\erp.js:1136 .\static\js\erp.js:1201 .\static\js\erp.js:1218
+msgid "Orders"
+msgstr "Orders"
+
+#: .\static\js\erp.js:1136 .\static\js\erp.js:1162 .\static\js\erp.js:1218
+msgid "Total"
+msgstr "Total"
+
+#: .\static\js\erp.js:1136 .\static\js\erp.js:1218
+msgid "Best seller"
+msgstr "Best seller"
+
+#: .\static\js\erp.js:1148
+msgid "Daily Sales"
+msgstr "Daily Sales"
+
+#: .\static\js\erp.js:1151
+msgid "Ingredient"
+msgstr "Ingredient"
+
+#: .\static\js\erp.js:1151
+msgid "Unit"
+msgstr "Unit"
+
+#: .\static\js\erp.js:1151
+msgid "Current Stock"
+msgstr "Current Stock"
+
+#: .\static\js\erp.js:1151
+msgid "Minimum"
+msgstr "Minimum"
+
+#: .\static\js\erp.js:1151 .\static\js\erp.js:1162
+msgid "Status"
+msgstr "Status"
+
+#: .\static\js\erp.js:1159
+msgid "Inventory"
+msgstr "Inventory"
+
+#: .\static\js\erp.js:1162
+msgid "Table/Customer"
+msgstr "Table/Customer"
+
+#: .\static\js\erp.js:1162
+msgid "Products"
+msgstr "Products"
+
+#: .\static\js\erp.js:1167
+msgid "Paid"
+msgstr "Paid"
+
+#: .\static\js\erp.js:1171
+msgid "Daily Orders"
+msgstr "Daily Orders"
+
+#: .\static\js\erp.js:1174
+msgid "Excel downloaded ✓"
+msgstr "Excel downloaded ✓"
+
+#: .\static\js\erp.js:1195
+msgid "Sales Report"
+msgstr "Sales Report"
+
+#: .\static\js\erp.js:1201
+msgid "Total sales"
+msgstr "Total sales"
+
+#: .\static\js\erp.js:1201
+msgid "Card + Transfer"
+msgstr "Card + Transfer"
+
+#: .\static\js\erp.js:1237
+msgid "Sales by payment method"
+msgstr "Sales by payment method"
+
+#: .\static\js\erp.js:1265
+msgid "Page"
+msgstr "Page"
+
+#: .\static\js\erp.js:1269
+msgid "PDF downloaded ✓"
+msgstr "PDF downloaded ✓"

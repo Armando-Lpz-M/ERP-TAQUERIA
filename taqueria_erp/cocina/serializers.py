@@ -37,3 +37,11 @@ class ProductoSerializer(serializers.ModelSerializer):
     class Meta:
         model = Producto
         fields = ("id", "nombre", "categoria", "categoria_id", "descripcion", "precio", "imagen", "disponible", "receta")
+
+
+class ProductoMenuSerializer(serializers.ModelSerializer):
+    categoria = serializers.CharField(source='categoria.nombre', read_only=True, allow_null=True)
+
+    class Meta:
+        model = Producto
+        fields = ('id', 'nombre', 'categoria', 'precio', 'disponible')

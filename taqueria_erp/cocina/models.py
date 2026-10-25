@@ -1,4 +1,5 @@
 from django.db import models
+from django.utils.translation import gettext_lazy as _
 
 # Create your models here.
 class Categoria(models.Model):
@@ -7,8 +8,8 @@ class Categoria(models.Model):
     activo = models.BooleanField(default=True)
 
     class Meta:
-        verbose_name = "Categoría"
-        verbose_name_plural = "Categorías"
+        verbose_name = _("Categoría")
+        verbose_name_plural = _("Categorías")
         ordering = ["nombre"]
 
     def __str__(self):
@@ -16,12 +17,12 @@ class Categoria(models.Model):
 
 class Ingrediente(models.Model):
     UNIDAD_CHOICES = [
-        ("kg", "Kilogramo"),
-        ("g", "Gramo"),
-        ("l", "Litro"),
-        ("ml", "Mililitro"),
-        ("pza", "Pieza"),
-        ("tortilla", "Tortilla"),
+        ("kg", _("Kilogramo")),
+        ("g", _("Gramo")),
+        ("l", _("Litro")),
+        ("ml", _("Mililitro")),
+        ("pza", _("Pieza")),
+        ("tortilla", _("Tortilla")),
     ]
 
     nombre = models.CharField(max_length=100)
@@ -31,8 +32,8 @@ class Ingrediente(models.Model):
     activo = models.BooleanField(default=True)
 
     class Meta:
-        verbose_name = "Ingrediente"
-        verbose_name_plural = "Ingredientes"
+        verbose_name = _("Ingrediente")
+        verbose_name_plural = _("Ingredientes")
         ordering = ["nombre"]
 
     def __str__(self):
@@ -53,8 +54,8 @@ class Producto(models.Model):
     creado = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        verbose_name = "Producto"
-        verbose_name_plural = "Productos"
+        verbose_name = _("Producto")
+        verbose_name_plural = _("Productos")
         ordering = ["categoria", "nombre"]
 
     def __str__(self):
@@ -67,8 +68,8 @@ class RecetaIngrediente(models.Model):
     cantidad = models.DecimalField(max_digits=8, decimal_places=3)
 
     class Meta:
-        verbose_name = "Ingrediente de receta"
-        verbose_name_plural = "Ingredientes de receta"
+        verbose_name = _("Ingrediente de receta")
+        verbose_name_plural = _("Ingredientes de receta")
         unique_together = ("producto", "ingrediente")
 
     def __str__(self):

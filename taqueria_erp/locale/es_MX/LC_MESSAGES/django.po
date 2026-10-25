@@ -1,0 +1,336 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-10-25 17:07-0600\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: es_MX\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: .\cocina\models.py:11
+msgid "Categoría"
+msgstr ""
+
+#: .\cocina\models.py:12
+msgid "Categorías"
+msgstr ""
+
+#: .\cocina\models.py:20
+msgid "Kilogramo"
+msgstr ""
+
+#: .\cocina\models.py:21
+msgid "Gramo"
+msgstr ""
+
+#: .\cocina\models.py:22
+msgid "Litro"
+msgstr ""
+
+#: .\cocina\models.py:23
+msgid "Mililitro"
+msgstr ""
+
+#: .\cocina\models.py:24
+msgid "Pieza"
+msgstr ""
+
+#: .\cocina\models.py:25
+msgid "Tortilla"
+msgstr ""
+
+#: .\cocina\models.py:35
+msgid "Ingrediente"
+msgstr ""
+
+#: .\cocina\models.py:36
+msgid "Ingredientes"
+msgstr ""
+
+#: .\cocina\models.py:57
+msgid "Producto"
+msgstr ""
+
+#: .\cocina\models.py:58
+msgid "Productos"
+msgstr ""
+
+#: .\cocina\models.py:71
+msgid "Ingrediente de receta"
+msgstr ""
+
+#: .\cocina\models.py:72
+msgid "Ingredientes de receta"
+msgstr ""
+
+#: .\empleados\models.py:8
+msgid "Taquero"
+msgstr ""
+
+#: .\empleados\models.py:9
+msgid "Mesero"
+msgstr ""
+
+#: .\empleados\models.py:10
+msgid "Cajero"
+msgstr ""
+
+#: .\empleados\models.py:11
+msgid "Administrador"
+msgstr ""
+
+#: .\empleados\models.py:23
+msgid "Empleado"
+msgstr ""
+
+#: .\empleados\models.py:24 .\templates\erp_taqueria.html:36
+msgid "Empleados"
+msgstr ""
+
+#: .\empleados\models.py:38
+msgid "Turno"
+msgstr ""
+
+#: .\empleados\models.py:39
+msgid "Turnos"
+msgstr ""
+
+#: .\inventario\models.py:14
+msgid "Proveedor"
+msgstr ""
+
+#: .\inventario\models.py:15
+msgid "Proveedores"
+msgstr ""
+
+#: .\inventario\models.py:31
+msgid "Entrada de inventario"
+msgstr ""
+
+#: .\inventario\models.py:32
+msgid "Entradas de inventario"
+msgstr ""
+
+#: .\inventario\models.py:62
+msgid "Salida de inventario"
+msgstr ""
+
+#: .\inventario\models.py:63
+msgid "Salidas de inventario"
+msgstr ""
+
+#: .\reportes\models.py:17
+msgid "Reporte de venta diaria"
+msgstr ""
+
+#: .\reportes\models.py:18
+msgid "Reportes de ventas diarias"
+msgstr ""
+
+#: .\templates\erp_taqueria.html:8
+msgid "Taquería ERP"
+msgstr ""
+
+#: .\templates\erp_taqueria.html:23 .\templates\login.html:32
+msgid "TAQUERÍA"
+msgstr ""
+
+#: .\templates\erp_taqueria.html:23
+msgid "ERP System"
+msgstr ""
+
+#: .\templates\erp_taqueria.html:28
+msgid "Principal"
+msgstr ""
+
+#: .\templates\erp_taqueria.html:29
+msgid "Dashboard"
+msgstr ""
+
+#: .\templates\erp_taqueria.html:30
+msgid "Tomar Orden"
+msgstr ""
+
+#: .\templates\erp_taqueria.html:33
+msgid "Gestión"
+msgstr ""
+
+#: .\templates\erp_taqueria.html:34
+msgid "Menú"
+msgstr ""
+
+#: .\templates\erp_taqueria.html:35
+msgid "Inventario"
+msgstr ""
+
+#: .\templates\erp_taqueria.html:39
+msgid "Análisis"
+msgstr ""
+
+#: .\templates\erp_taqueria.html:40
+msgid "Reportes"
+msgstr ""
+
+#: .\templates\erp_taqueria.html:49 .\templates\login.html:105
+msgid "Idioma"
+msgstr ""
+
+#: .\templates\erp_taqueria.html:56
+msgid "Cerrar sesión"
+msgstr ""
+
+#: .\templates\login.html:8
+msgid "Taquería ERP — Sistema de gestión integral"
+msgstr ""
+
+#: .\templates\login.html:9
+msgid "Taquería ERP — Acceso"
+msgstr ""
+
+#: .\templates\login.html:31
+msgid "Sistema de gestión"
+msgstr ""
+
+#: .\templates\login.html:34
+msgid ""
+"Gestiona órdenes, inventario, empleados y reportes desde un solo lugar."
+msgstr ""
+
+#: .\templates\login.html:35
+msgid "Rápido, simple y a tu medida."
+msgstr ""
+
+#: .\templates\login.html:38
+msgid "Control total"
+msgstr ""
+
+#: .\templates\login.html:39
+msgid "Órdenes / día"
+msgstr ""
+
+#: .\templates\login.html:40
+msgid "Roles de acceso"
+msgstr ""
+
+#: .\templates\login.html:53
+msgid "Bienvenido"
+msgstr ""
+
+#: .\templates\login.html:54
+msgid "Ingresa tus credenciales para continuar"
+msgstr ""
+
+#: .\templates\login.html:57 .\templates\login.html:65
+msgid "Usuario"
+msgstr ""
+
+#: .\templates\login.html:63
+msgid "Tu usuario"
+msgstr ""
+
+#: .\templates\login.html:71 .\templates\login.html:79
+msgid "Contraseña"
+msgstr ""
+
+#: .\templates\login.html:84 .\templates\login.html:85
+msgid "Entrar al sistema"
+msgstr ""
+
+#: .\templates\login.html:89
+msgid "Usuario o contraseña incorrectos"
+msgstr ""
+
+#: .\templates\login.html:93
+msgid "Niveles de acceso"
+msgstr ""
+
+#: .\templates\login.html:95
+msgid "Administrador — Todo"
+msgstr ""
+
+#: .\templates\login.html:96
+msgid "Cajero — Órdenes+Inv."
+msgstr ""
+
+#: .\templates\login.html:97
+msgid "Mesero — Órdenes"
+msgstr ""
+
+#: .\templates\login.html:98
+msgid "Taquero — Ver pedidos"
+msgstr ""
+
+#: .\ventas\models.py:13
+msgid "Mesa"
+msgstr ""
+
+#: .\ventas\models.py:14
+msgid "Mesas"
+msgstr ""
+
+#: .\ventas\models.py:23
+msgid "Abierta"
+msgstr ""
+
+#: .\ventas\models.py:24
+msgid "En proceso"
+msgstr ""
+
+#: .\ventas\models.py:25
+msgid "Lista"
+msgstr ""
+
+#: .\ventas\models.py:26
+msgid "Pagada"
+msgstr ""
+
+#: .\ventas\models.py:27
+msgid "Cancelada"
+msgstr ""
+
+#: .\ventas\models.py:38
+msgid "Orden"
+msgstr ""
+
+#: .\ventas\models.py:39
+msgid "Órdenes"
+msgstr ""
+
+#: .\ventas\models.py:58
+msgid "Item de orden"
+msgstr ""
+
+#: .\ventas\models.py:59
+msgid "Items de orden"
+msgstr ""
+
+#: .\ventas\models.py:76
+msgid "Efectivo"
+msgstr ""
+
+#: .\ventas\models.py:77
+msgid "Tarjeta"
+msgstr ""
+
+#: .\ventas\models.py:78
+msgid "Transferencia"
+msgstr ""
+
+#: .\ventas\models.py:89
+msgid "Ticket"
+msgstr ""
+
+#: .\ventas\models.py:90
+msgid "Tickets"
+msgstr ""

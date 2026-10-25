@@ -1,10 +1,11 @@
-{% load static %}
+{% load static i18n %}
+{% get_current_language as current_language %}
 <!DOCTYPE html>
-<html lang="es">
+<html lang="{{ current_language }}" data-currency-code="{{ currency_code|escape }}" data-time-zone="{{ time_zone|escape }}">
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-<title>Taquería ERP</title>
+<title>{% trans 'Taquería ERP' %}</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet"/>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -19,30 +20,40 @@
   <div class="sb-logo">
     <div class="sb-brand">
       <span class="sb-icon">🌮</span>
-      <div><div class="sb-name">TAQUERÍA</div><div class="sb-ver">ERP System</div></div>
+      <div><div class="sb-name">{% trans 'TAQUERÍA' %}</div><div class="sb-ver">{% trans 'ERP System' %}</div></div>
     </div>
   </div>
   <nav id="nav">
     <div class="nav-sec">
-      <div class="nav-sec-lbl">Principal</div>
-      <button class="nav-btn active" data-page="dashboard" data-roles="admin,cajero,mesero,taquero" onclick="navTo('dashboard',this)"><span class="nav-ico">⬛</span>Dashboard</button>
-      <button class="nav-btn" data-page="ordenes" data-roles="admin,cajero,mesero,taquero" onclick="navTo('ordenes',this)"><span class="nav-ico">🧾</span>Tomar Orden</button>
+      <div class="nav-sec-lbl">{% trans 'Principal' %}</div>
+      <button class="nav-btn active" data-page="dashboard" data-roles="admin,cajero,mesero,cocina" onclick="navTo('dashboard',this)"><span class="nav-ico">⬛</span>{% trans 'Dashboard' %}</button>
+      <button class="nav-btn" data-page="ordenes" data-roles="admin,cajero,mesero" onclick="navTo('ordenes',this)"><span class="nav-ico">🧾</span>{% trans 'Tomar Orden' %}</button>
     </div>
     <div class="nav-sec">
-      <div class="nav-sec-lbl">Gestión</div>
-      <button class="nav-btn" data-page="menu-admin" data-roles="admin" onclick="navTo('menu-admin',this)"><span class="nav-ico">🌮</span>Menú</button>
-      <button class="nav-btn" data-page="inventario" data-roles="admin,cajero" onclick="navTo('inventario',this)"><span class="nav-ico">📦</span>Inventario</button>
-      <button class="nav-btn" data-page="empleados" data-roles="admin" onclick="navTo('empleados',this)"><span class="nav-ico">👥</span>Empleados</button>
+      <div class="nav-sec-lbl">{% trans 'Gestión' %}</div>
+      <button class="nav-btn" data-page="menu-admin" data-roles="admin" onclick="navTo('menu-admin',this)"><span class="nav-ico">🌮</span>{% trans 'Menú' %}</button>
+      <button class="nav-btn" data-page="inventario" data-roles="admin" onclick="navTo('inventario',this)"><span class="nav-ico">📦</span>{% trans 'Inventario' %}</button>
+      <button class="nav-btn" data-page="empleados" data-roles="admin" onclick="navTo('empleados',this)"><span class="nav-ico">👥</span>{% trans 'Empleados' %}</button>
     </div>
     <div class="nav-sec">
-      <div class="nav-sec-lbl">Análisis</div>
-      <button class="nav-btn" data-page="reportes" data-roles="admin,cajero" onclick="navTo('reportes',this)"><span class="nav-ico">📊</span>Reportes</button>
+      <div class="nav-sec-lbl">{% trans 'Análisis' %}</div>
+      <button class="nav-btn" data-page="reportes" data-roles="admin,cajero" onclick="navTo('reportes',this)"><span class="nav-ico">📊</span>{% trans 'Reportes' %}</button>
     </div>
   </nav>
   <div class="sb-user">
     <div class="u-av" id="u-av">?</div>
     <div class="u-info"><div class="u-name" id="u-name">—</div><div class="u-rol" id="u-rol">—</div></div>
-    <button class="u-out" onclick="doLogout()" title="Cerrar sesión">⇥</button>
+    <form action="{% url 'set_language' %}" method="post" style="display:inline;">
+      {% csrf_token %}
+      <input name="next" type="hidden" value="{{ request.get_full_path }}" />
+      <select name="language" onchange="this.form.submit()" aria-label="{% trans 'Idioma' %}" style="max-width: 100px; font-size: 11px;">
+        {% get_current_language as current_language %}
+        {% for lang_code, lang_name in LANGUAGES %}
+          <option value="{{ lang_code }}" {% if lang_code == current_language %}selected{% endif %}>{{ lang_name }}</option>
+        {% endfor %}
+      </select>
+    </form>
+    <button class="u-out" onclick="doLogout()" title="{% trans 'Cerrar sesión' %}">⇥</button>
   </div>
 </div>
 
@@ -50,26 +61,26 @@
 <div class="main">
 
   <!-- DASHBOARD -->
-  <div class="page active" id="pg-dashboard">
+  <div class="page active" id="pg-dashboard" data-roles="admin,cajero,mesero,cocina">
     <div class="topbar">
       <span class="tb-title">DASHBOARD</span>
       <div class="tb-actions">
         <span id="dash-date" style="font-size:10px;color:var(--muted)"></span>
-        <button class="btn btn-amber btn-sm" onclick="abrirModalOrden()">+ Nueva orden</button>
+        <button class="btn btn-amber btn-sm" data-roles="admin,cajero,mesero" onclick="abrirModalOrden()">+ Nueva orden</button>
       </div>
     </div>
     <div class="dash-body">
-      <div class="stat-grid">
-        <div class="stat-card"><div class="stat-lbl">Ventas hoy</div><div class="stat-val" id="s-ventas">$0.00</div><div class="stat-sub">Total cobrado</div></div>
+      <div class="stat-grid" id="dashboard-stats">
+        <div class="stat-card"><div class="stat-lbl">Ventas hoy</div><div class="stat-val" id="s-ventas" data-value="0"></div><div class="stat-sub">Total cobrado</div></div>
         <div class="stat-card"><div class="stat-lbl">Órdenes hoy</div><div class="stat-val" id="s-ord">0</div><div class="stat-sub">Completadas</div></div>
         <div class="stat-card"><div class="stat-lbl">Mesas activas</div><div class="stat-val" id="s-mesas">0</div><div class="stat-sub">Con orden abierta</div></div>
         <div class="stat-card"><div class="stat-lbl">Más vendido</div><div class="stat-val" id="s-top" style="font-size:15px;padding-top:6px">—</div><div class="stat-sub">Hoy</div></div>
       </div>
-      <div>
+      <div id="dashboard-tables">
         <p style="font-size:9px;text-transform:uppercase;letter-spacing:2px;color:var(--muted);margin-bottom:7px">Estado de mesas</p>
         <div class="mesas-grid" id="mesas-grid"></div>
       </div>
-      <div>
+      <div id="dashboard-orders">
         <p style="font-size:9px;text-transform:uppercase;letter-spacing:2px;color:var(--muted);margin-bottom:7px">Órdenes activas</p>
         <div class="tbl-wrap"><table><thead><tr><th>Cliente/Mesa</th><th>Productos</th><th>Total</th><th>Estado</th><th></th></tr></thead><tbody id="dash-tbody"></tbody></table></div>
       </div>
@@ -77,7 +88,7 @@
   </div>
 
   <!-- ORDEN -->
-  <div class="page" id="pg-ordenes">
+  <div class="page" id="pg-ordenes" data-roles="admin,cajero,mesero">
     <div class="topbar">
       <span class="tb-title" id="orden-tb-lbl">NUEVA ORDEN</span>
       <div class="tb-actions"><button class="btn btn-ghost btn-sm" onclick="navTo('dashboard',document.querySelector('[data-page=dashboard]'))">← Volver</button></div>
@@ -88,8 +99,8 @@
         <div class="tk-hdr"><div class="tk-eye">Orden activa</div><div class="tk-client" id="tk-client">—</div></div>
         <div class="tk-rows" id="tk-rows"><p class="empty-s">Sin productos</p></div>
         <div class="tk-ftr">
-          <div class="total-row"><span class="tot-lbl">Total</span><span class="tot-num" id="tk-total">$0.00</span></div>
-          <button class="btn btn-green btn-full btn-lg" style="margin-bottom:6px" onclick="abrirCobro()">Cobrar orden</button>
+          <div class="total-row"><span class="tot-lbl">Total</span><span class="tot-num" id="tk-total" data-value="0"></span></div>
+          <button class="btn btn-green btn-full btn-lg" data-roles="admin,cajero" style="margin-bottom:6px" onclick="abrirCobro()">Cobrar orden</button>
           <button class="btn btn-ghost btn-full" onclick="navTo('dashboard',document.querySelector('[data-page=dashboard]'))">Guardar y salir</button>
         </div>
       </div>
@@ -97,47 +108,47 @@
   </div>
 
   <!-- MENÚ ADMIN -->
-  <div class="page" id="pg-menu-admin">
-    <div class="topbar"><span class="tb-title">MENÚ</span><div class="tb-actions"><button class="btn btn-amber btn-sm" onclick="abrirModalProd()">+ Agregar</button></div></div>
+  <div class="page" id="pg-menu-admin" data-roles="admin">
+    <div class="topbar"><span class="tb-title">MENÚ</span><div class="tb-actions"><button class="btn btn-amber btn-sm" data-roles="admin" onclick="abrirModalProd()">+ Agregar</button></div></div>
     <div class="menu-body"><div class="tbl-wrap"><table><thead><tr><th>Producto</th><th>Categoría</th><th>Precio</th><th>Disponible</th><th></th></tr></thead><tbody id="menu-tbody"></tbody></table></div></div>
   </div>
 
   <!-- INVENTARIO -->
-  <div class="page" id="pg-inventario">
-    <div class="topbar"><span class="tb-title">INVENTARIO</span><div class="tb-actions"><button class="btn btn-amber btn-sm" onclick="abrirModal('modal-entrada')">+ Entrada</button><button class="btn btn-ghost btn-sm" onclick="abrirModal('modal-salida')">− Salida</button></div></div>
+  <div class="page" id="pg-inventario" data-roles="admin">
+    <div class="topbar"><span class="tb-title">INVENTARIO</span><div class="tb-actions"><button class="btn btn-amber btn-sm" data-roles="admin" onclick="abrirModal('modal-entrada')">+ Entrada</button><button class="btn btn-ghost btn-sm" data-roles="admin" onclick="abrirModal('modal-salida')">− Salida</button></div></div>
     <div class="inv-body"><div class="tbl-wrap"><table><thead><tr><th>Ingrediente</th><th>Unidad</th><th>Stock actual</th><th>Mínimo</th><th>Estado</th></tr></thead><tbody id="inv-tbody"></tbody></table></div></div>
   </div>
 
   <!-- EMPLEADOS -->
-  <div class="page" id="pg-empleados">
-    <div class="topbar"><span class="tb-title">EMPLEADOS</span><div class="tb-actions"><button class="btn btn-amber btn-sm" onclick="abrirModal('modal-emp')">+ Agregar</button></div></div>
+  <div class="page" id="pg-empleados" data-roles="admin">
+    <div class="topbar"><span class="tb-title">EMPLEADOS</span><div class="tb-actions"><button class="btn btn-amber btn-sm" data-roles="admin" onclick="abrirModal('modal-emp')">+ Agregar</button></div></div>
     <div class="emp-body"><div class="emp-grid" id="emp-grid"></div></div>
   </div>
 
   <!-- REPORTES -->
-  <div class="page" id="pg-reportes">
+  <div class="page" id="pg-reportes" data-roles="admin,cajero">
     <div class="topbar">
       <span class="tb-title">REPORTES</span>
       <div class="tb-actions">
         <button class="btn btn-amber btn-sm" onclick="generarReporte()">⟳ Actualizar</button>
-        <button class="btn btn-green btn-sm" onclick="exportarExcel()">↓ Excel</button>
-        <button class="btn btn-red btn-sm" onclick="exportarPDF()">↓ PDF</button>
+        <button class="btn btn-green btn-sm" data-roles="admin" onclick="exportarExcel()">↓ Excel</button>
+        <button class="btn btn-red btn-sm" data-roles="admin" onclick="exportarPDF()">↓ PDF</button>
       </div>
     </div>
     <div class="rep-body">
       <div class="stat-grid">
-        <div class="stat-card"><div class="stat-lbl">Ventas hoy</div><div class="stat-val" id="r-total">$0</div></div>
+        <div class="stat-card"><div class="stat-lbl">Ventas hoy</div><div class="stat-val" id="r-total" data-value="0"></div></div>
         <div class="stat-card"><div class="stat-lbl">Órdenes</div><div class="stat-val" id="r-ords">0</div></div>
-        <div class="stat-card"><div class="stat-lbl">Efectivo</div><div class="stat-val" id="r-efec">$0</div></div>
-        <div class="stat-card"><div class="stat-lbl">Tarjeta + Transfer.</div><div class="stat-val" id="r-dig">$0</div></div>
+        <div class="stat-card"><div class="stat-lbl">Efectivo</div><div class="stat-val" id="r-efec" data-value="0"></div></div>
+        <div class="stat-card"><div class="stat-lbl">Tarjeta + Transfer.</div><div class="stat-val" id="r-dig" data-value="0"></div></div>
       </div>
-      <div class="charts-grid">
+      <div class="charts-grid" data-roles="admin">
         <div class="chart-card"><div class="chart-title">Ventas por método de pago</div><div class="chart-wrap"><canvas id="chart-metodo"></canvas></div></div>
         <div class="chart-card"><div class="chart-title">Tendencia semanal</div><div class="chart-wrap"><canvas id="chart-semana"></canvas></div></div>
         <div class="chart-card"><div class="chart-title">Productos más vendidos</div><div class="chart-wrap"><canvas id="chart-productos"></canvas></div></div>
         <div class="chart-card"><div class="chart-title">Distribución de ventas</div><div class="chart-wrap"><canvas id="chart-donut"></canvas></div></div>
       </div>
-      <div>
+      <div data-roles="admin">
         <p style="font-size:9px;text-transform:uppercase;letter-spacing:2px;color:var(--muted);margin-bottom:7px">Historial de reportes</p>
         <div class="tbl-wrap"><table><thead><tr><th>Fecha</th><th>Órdenes</th><th>Total</th><th>Efectivo</th><th>Tarjeta</th><th>Transfer.</th><th>Más vendido</th></tr></thead><tbody id="rep-tbody"></tbody></table></div>
       </div>
@@ -146,7 +157,7 @@
 </div>
 
 <!-- MODALES -->
-<div class="modal-ov" id="modal-orden">
+<div class="modal-ov" id="modal-orden" data-roles="admin,cajero,mesero">
   <div class="modal-box">
     <div class="modal-title">Nueva orden</div>
     <div class="field"><label>Mesa o cliente</label><input id="mo-mesa" type="text" placeholder="Mesa 3, Para llevar, Juan..."/></div>
@@ -154,7 +165,7 @@
     <div class="modal-btns"><button class="btn btn-ghost" onclick="cerrarModal('modal-orden')">Cancelar</button><button class="btn btn-amber" onclick="crearOrden()">Crear</button></div>
   </div>
 </div>
-<div class="modal-ov" id="modal-prod">
+<div class="modal-ov" id="modal-prod" data-roles="admin">
   <div class="modal-box">
     <div class="modal-title" id="mprod-title">Nuevo producto</div>
     <div class="field"><label>Nombre</label><input id="mp-n" type="text"/></div>
@@ -164,7 +175,7 @@
     <div class="modal-btns"><button class="btn btn-ghost" onclick="cerrarModal('modal-prod')">Cancelar</button><button class="btn btn-amber" onclick="guardarProducto()">Guardar</button></div>
   </div>
 </div>
-<div class="modal-ov" id="modal-entrada">
+<div class="modal-ov" id="modal-entrada" data-roles="admin">
   <div class="modal-box">
     <div class="modal-title">Entrada de inventario</div>
     <div class="field"><label>Ingrediente</label><select id="me-i"><option value="">Seleccionar...</option></select></div>
@@ -173,7 +184,7 @@
     <div class="modal-btns"><button class="btn btn-ghost" onclick="cerrarModal('modal-entrada')">Cancelar</button><button class="btn btn-amber" onclick="guardarEntrada()">Registrar</button></div>
   </div>
 </div>
-<div class="modal-ov" id="modal-salida">
+<div class="modal-ov" id="modal-salida" data-roles="admin">
   <div class="modal-box">
     <div class="modal-title">Salida / Merma</div>
     <div class="field"><label>Ingrediente</label><select id="ms-i"><option value="">Seleccionar...</option></select></div>
@@ -182,7 +193,7 @@
     <div class="modal-btns"><button class="btn btn-ghost" onclick="cerrarModal('modal-salida')">Cancelar</button><button class="btn btn-red" onclick="guardarSalida()">Registrar</button></div>
   </div>
 </div>
-<div class="modal-ov" id="modal-emp">
+<div class="modal-ov" id="modal-emp" data-roles="admin">
   <div class="modal-box">
     <div class="modal-title">Nuevo empleado</div>
     <div class="field"><label>Nombre</label><input id="mep-n" type="text"/></div>
@@ -194,10 +205,10 @@
 </div>
 
 <!-- COBRO -->
-<div class="cobro-ov" id="cobro-ov">
+<div class="cobro-ov" id="cobro-ov" data-roles="admin,cajero">
   <div class="cobro-box">
     <div class="cobro-title">COBRO</div>
-    <div class="cobro-total-b"><div class="cobro-tot-lbl">Total a cobrar</div><div class="cobro-tot-num" id="cobro-tot">$0.00</div></div>
+    <div class="cobro-total-b"><div class="cobro-tot-lbl">Total a cobrar</div><div class="cobro-tot-num" id="cobro-tot" data-value="0"></div></div>
     <div class="cobro-items" id="cobro-items"></div>
     <p style="font-size:9px;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted);margin-bottom:6px">Método de pago</p>
     <div class="metodo-g">
@@ -207,7 +218,7 @@
     </div>
     <div id="efec-sec">
       <div class="field"><label>Pagó con</label><input type="number" id="cobro-pago" placeholder="0.00" oninput="calcCambio()"/></div>
-      <div class="cambio-blk" id="cambio-blk"><div class="cambio-lbl">Cambio</div><div class="cambio-val" id="cambio-v">$0.00</div></div>
+      <div class="cambio-blk" id="cambio-blk"><div class="cambio-lbl">Cambio</div><div class="cambio-val" id="cambio-v" data-value="0"></div></div>
     </div>
     <button class="btn btn-amber btn-full btn-lg" style="margin-bottom:6px" onclick="confirmarPago()">✓ Confirmar pago</button>
     <button class="btn btn-ghost btn-full" onclick="cerrarCobro()">Cancelar</button>
@@ -228,6 +239,7 @@
 <div class="toast" id="toast"></div>
 
 <!-- JS separado -->
+<script src="{% url 'javascript-catalog' %}"></script>
 <script src="{% static 'js/erp.js' %}"></script>
 </body>
 </html>

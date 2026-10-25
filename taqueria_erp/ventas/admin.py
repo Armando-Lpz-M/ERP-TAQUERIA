@@ -1,5 +1,6 @@
 from django.contrib import admin
 from unfold.admin import ModelAdmin, TabularInline
+from empleados.audit import AuditedModelAdminMixin
 from .models import Mesa, Orden, ItemOrden, Ticket
 
 
@@ -10,13 +11,13 @@ class ItemOrdenInline(TabularInline):
 
 
 @admin.register(Mesa)
-class MesaAdmin(ModelAdmin):
+class MesaAdmin(AuditedModelAdminMixin, ModelAdmin):
     list_display = ("numero", "capacidad", "activa")
     list_editable = ("activa",)
 
 
 @admin.register(Orden)
-class OrdenAdmin(ModelAdmin):
+class OrdenAdmin(AuditedModelAdminMixin, ModelAdmin):
     list_display = ("id", "mesa", "empleado", "estado", "total", "creada")
     list_filter = ("estado", "creada")
     search_fields = ("id", "mesa__numero")
@@ -25,7 +26,7 @@ class OrdenAdmin(ModelAdmin):
 
 
 @admin.register(Ticket)
-class TicketAdmin(ModelAdmin):
+class TicketAdmin(AuditedModelAdminMixin, ModelAdmin):
     list_display = ("id", "orden", "total", "metodo_pago", "cambio", "fecha")
     list_filter = ("metodo_pago", "fecha")
     readonly_fields = ("fecha", "cambio")

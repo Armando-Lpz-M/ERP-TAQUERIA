@@ -2,13 +2,14 @@ from rest_framework import viewsets, filters
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework.permissions import IsAuthenticated
-from empleados.permissions import EsAdmin
+from empleados.audit import AuditedViewSetMixin, registrar_evento
+from empleados.permissions import EsAdmin, rol_usuario
+from .permissions import EsMenuConsultable
 from .models import Categoria, Ingrediente, Producto
-from .serializers import CategoriaSerializer, IngredienteSerializer, ProductoSerializer
+from .serializers import CategoriaSerializer, IngredienteSerializer, ProductoMenuSerializer, ProductoSerializer
 
 
-class CategoriaViewSet(viewsets.ModelViewSet):
+class CategoriaViewSet(AuditedViewSetMixin, viewsets.ModelViewSet):
     queryset = Categoria.objects.filter(activo=True)
     serializer_class = CategoriaSerializer
     search_fields = ("nombre",)
@@ -16,10 +17,10 @@ class CategoriaViewSet(viewsets.ModelViewSet):
     def get_permissions(self):
         if self.action in ['create', 'update', 'partial_update', 'destroy']:
             return [EsAdmin()]
-        return [IsAuthenticated()]
+        return [EsMenuConsultable()]
 
 
-class IngredienteViewSet(viewsets.ModelViewSet):
+class IngredienteViewSet(AuditedViewSetMixin, viewsets.ModelViewSet):
     queryset = Ingrediente.objects.filter(activo=True)
     serializer_class = IngredienteSerializer
     filter_backends = [DjangoFilterBackend, filters.SearchFilter]
@@ -27,9 +28,7 @@ class IngredienteViewSet(viewsets.ModelViewSet):
     search_fields = ("nombre",)
 
     def get_permissions(self):
-        if self.action in ['create', 'update', 'partial_update', 'destroy']:
-            return [EsAdmin()]
-        return [IsAuthenticated()]
+        return [EsAdmin()]
 
     @action(detail=False, methods=["get"], url_path="stock-bajo")
     def stock_bajo(self, request):
@@ -39,17 +38,35 @@ class IngredienteViewSet(viewsets.ModelViewSet):
         return Response(serializer.data)
 
 
-class ProductoViewSet(viewsets.ModelViewSet):
+class ProductoViewSet(AuditedViewSetMixin, viewsets.ModelViewSet):
     queryset = Producto.objects.filter(disponible=True)
     serializer_class = ProductoSerializer
     filter_backends = [DjangoFilterBackend, filters.SearchFilter]
     filterset_fields = ("categoria",)
     search_fields = ("nombre",)
 
+    def get_serializer_class(self):
+        if rol_usuario(self.request.user) == 'admin':
+            return ProductoSerializer
+        return ProductoMenuSerializer
+
     def get_permissions(self):
         if self.action in ['create', 'update', 'partial_update', 'destroy']:
             return [EsAdmin()]
-        return [IsAuthenticated()]
+        return [EsMenuConsultable()]
+
+    def perform_update(self, serializer):
+        old_price = self.get_object().precio
+        product = serializer.save()
+        if old_price != product.precio:
+            registrar_evento(
+                usuario=self.request.user,
+                accion='cambio_precio',
+                objeto=product,
+                anterior=old_price,
+                nuevo=product.precio,
+                request=self.request,
+            )
 
     @action(detail=False, methods=["get"], url_path="menu")
     def menu(self, request):
@@ -59,6 +76,6 @@ class ProductoViewSet(viewsets.ModelViewSet):
             productos = categoria.productos.filter(disponible=True)
             data.append({
                 "categoria": categoria.nombre,
-                "productos": ProductoSerializer(productos, many=True).data,
+                "productos": self.get_serializer(productos, many=True).data,
             })
         return Response(data)

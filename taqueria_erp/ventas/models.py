@@ -1,4 +1,5 @@
 from django.db import models
+from django.utils.translation import gettext_lazy as _
 from cocina.models import Producto
 from empleados.models import Empleado
 
@@ -9,8 +10,8 @@ class Mesa(models.Model):
     activa = models.BooleanField(default=True)
 
     class Meta:
-        verbose_name = "Mesa"
-        verbose_name_plural = "Mesas"
+        verbose_name = _("Mesa")
+        verbose_name_plural = _("Mesas")
         ordering = ["numero"]
 
     def __str__(self):
@@ -19,11 +20,11 @@ class Mesa(models.Model):
 
 class Orden(models.Model):
     ESTADO_CHOICES = [
-        ("abierta", "Abierta"),
-        ("en_proceso", "En proceso"),
-        ("lista", "Lista"),
-        ("pagada", "Pagada"),
-        ("cancelada", "Cancelada"),
+        ("abierta", _("Abierta")),
+        ("en_proceso", _("En proceso")),
+        ("lista", _("Lista")),
+        ("pagada", _("Pagada")),
+        ("cancelada", _("Cancelada")),
     ]
 
     mesa = models.ForeignKey(Mesa, on_delete=models.SET_NULL, null=True, blank=True)
@@ -34,8 +35,8 @@ class Orden(models.Model):
     notas = models.TextField(blank=True)
 
     class Meta:
-        verbose_name = "Orden"
-        verbose_name_plural = "Órdenes"
+        verbose_name = _("Orden")
+        verbose_name_plural = _("Órdenes")
         ordering = ["-creada"]
 
     def __str__(self):
@@ -54,8 +55,8 @@ class ItemOrden(models.Model):
     notas = models.TextField(blank=True)
 
     class Meta:
-        verbose_name = "Item de orden"
-        verbose_name_plural = "Items de orden"
+        verbose_name = _("Item de orden")
+        verbose_name_plural = _("Items de orden")
 
     def __str__(self):
         return f"{self.cantidad}x {self.producto.nombre}"
@@ -72,9 +73,9 @@ class ItemOrden(models.Model):
 
 class Ticket(models.Model):
     METODO_PAGO_CHOICES = [
-        ("efectivo", "Efectivo"),
-        ("tarjeta", "Tarjeta"),
-        ("transferencia", "Transferencia"),
+        ("efectivo", _("Efectivo")),
+        ("tarjeta", _("Tarjeta")),
+        ("transferencia", _("Transferencia")),
     ]
 
     orden = models.OneToOneField(Orden, on_delete=models.CASCADE, related_name="ticket")
@@ -85,8 +86,8 @@ class Ticket(models.Model):
     fecha = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        verbose_name = "Ticket"
-        verbose_name_plural = "Tickets"
+        verbose_name = _("Ticket")
+        verbose_name_plural = _("Tickets")
         ordering = ["-fecha"]
 
     def __str__(self):

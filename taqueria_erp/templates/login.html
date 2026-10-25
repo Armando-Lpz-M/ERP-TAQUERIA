@@ -1,11 +1,12 @@
-{% load static %}
+{% load static i18n %}
+{% get_current_language as current_language %}
 <!DOCTYPE html>
-<html lang="es">
+<html lang="{{ current_language }}">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="Taquería ERP — Sistema de gestión integral" />
-    <title>Taquería ERP — Acceso</title>
+    <meta name="description" content="{% trans 'Taquería ERP — Sistema de gestión integral' %}" />
+    <title>{% trans 'Taquería ERP — Acceso' %}</title>
     <link
       href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;600&display=swap"
       rel="stylesheet"
@@ -27,16 +28,16 @@
       </svg>
       <div class="taco-float">🌮</div>
       <div class="left-content">
-        <div class="left-tag">Sistema de gestión</div>
-        <h1 class="left-h1">TAQUERÍA<br /><span>ERP</span></h1>
+        <div class="left-tag">{% trans 'Sistema de gestión' %}</div>
+        <h1 class="left-h1">{% trans 'TAQUERÍA' %}<br /><span>ERP</span></h1>
         <p class="left-desc">
-          Gestiona órdenes, inventario, empleados y reportes desde un solo lugar.
-          Rápido, simple y a tu medida.
+          {% trans 'Gestiona órdenes, inventario, empleados y reportes desde un solo lugar.' %}
+          {% trans 'Rápido, simple y a tu medida.' %}
         </p>
         <div class="left-stats">
-          <div><div class="ls-val">360°</div><div class="ls-lbl">Control total</div></div>
-          <div><div class="ls-val">∞</div><div class="ls-lbl">Órdenes / día</div></div>
-          <div><div class="ls-val">4</div><div class="ls-lbl">Roles de acceso</div></div>
+          <div><div class="ls-val">360°</div><div class="ls-lbl">{% trans 'Control total' %}</div></div>
+          <div><div class="ls-val">∞</div><div class="ls-lbl">{% trans 'Órdenes / día' %}</div></div>
+          <div><div class="ls-val">4</div><div class="ls-lbl">{% trans 'Roles de acceso' %}</div></div>
         </div>
       </div>
     </div>
@@ -49,25 +50,25 @@
         <div class="login-brand-sub">Sistema de gestión integral v1.0</div>
       </div>
 
-      <h2 class="login-greeting">Bienvenido</h2>
-      <p class="login-hint">Ingresa tus credenciales para continuar</p>
+      <h2 class="login-greeting">{% trans 'Bienvenido' %}</h2>
+      <p class="login-hint">{% trans 'Ingresa tus credenciales para continuar' %}</p>
 
       <div class="field">
-        <label for="u">Usuario</label>
+        <label for="u">{% trans 'Usuario' %}</label>
         <div class="input-wrap">
           <span class="input-ico" aria-hidden="true">👤</span>
           <input
             id="u"
             type="text"
-            placeholder="Tu usuario"
+            placeholder="{% trans 'Tu usuario' %}"
             autocomplete="username"
-            aria-label="Usuario"
+            aria-label="{% trans 'Usuario' %}"
           />
         </div>
       </div>
 
       <div class="field">
-        <label for="p">Contraseña</label>
+        <label for="p">{% trans 'Contraseña' %}</label>
         <div class="input-wrap">
           <span class="input-ico" aria-hidden="true">🔒</span>
           <input
@@ -75,28 +76,39 @@
             type="password"
             placeholder="••••••••"
             autocomplete="current-password"
-            aria-label="Contraseña"
+            aria-label="{% trans 'Contraseña' %}"
           />
         </div>
       </div>
 
-      <button class="btn-login" id="btn-login" onclick="doLogin()" aria-label="Entrar al sistema">
-        <span id="btn-txt">Entrar al sistema</span>
+      <button class="btn-login" id="btn-login" onclick="doLogin()" aria-label="{% trans 'Entrar al sistema' %}">
+        <span id="btn-txt">{% trans 'Entrar al sistema' %}</span>
       </button>
 
       <div class="err-bar" id="err-bar" role="alert">
-        Usuario o contraseña incorrectos
+        {% trans 'Usuario o contraseña incorrectos' %}
       </div>
 
       <div class="roles-section">
-        <div class="roles-title">Niveles de acceso</div>
+        <div class="roles-title">{% trans 'Niveles de acceso' %}</div>
         <div class="roles-grid">
-          <div class="role-chip"><div class="r-dot" style="background:#EF9F27"></div>Administrador — Todo</div>
-          <div class="role-chip"><div class="r-dot" style="background:#3b82f6"></div>Cajero — Órdenes+Inv.</div>
-          <div class="role-chip"><div class="r-dot" style="background:#5a9e1f"></div>Mesero — Órdenes</div>
-          <div class="role-chip"><div class="r-dot" style="background:#E24B4A"></div>Taquero — Ver pedidos</div>
+          <div class="role-chip"><div class="r-dot" style="background:#EF9F27"></div>{% trans 'Administrador — Todo' %}</div>
+          <div class="role-chip"><div class="r-dot" style="background:#3b82f6"></div>{% trans 'Cajero — Órdenes+Inv.' %}</div>
+          <div class="role-chip"><div class="r-dot" style="background:#5a9e1f"></div>{% trans 'Mesero — Órdenes' %}</div>
+          <div class="role-chip"><div class="r-dot" style="background:#E24B4A"></div>{% trans 'Taquero — Ver pedidos' %}</div>
         </div>
       </div>
+
+      <form action="{% url 'set_language' %}" method="post" style="margin-top: 1rem;">
+        {% csrf_token %}
+        <input name="next" type="hidden" value="{{ request.get_full_path }}" />
+        <select name="language" onchange="this.form.submit()" aria-label="{% trans 'Idioma' %}" style="width: 100%;">
+          {% get_current_language as current_language %}
+          {% for lang_code, lang_name in LANGUAGES %}
+            <option value="{{ lang_code }}" {% if lang_code == current_language %}selected{% endif %}>{{ lang_name }}</option>
+          {% endfor %}
+        </select>
+      </form>
     </div>
 
     <!-- JS separado -->

@@ -26,10 +26,33 @@ class ItemOrdenSerializer(serializers.ModelSerializer):
 class OrdenSerializer(serializers.ModelSerializer):
     items = ItemOrdenSerializer(many=True, read_only=True)
     total = serializers.DecimalField(max_digits=10, decimal_places=2, read_only=True)
+    estado = serializers.CharField(read_only=True)
 
     class Meta:
         model = Orden
         fields = ("id", "mesa", "empleado", "estado", "items", "total", "creada", "notas")
+
+
+class CocinaItemOrdenSerializer(serializers.ModelSerializer):
+    producto = serializers.CharField(source='producto.nombre', read_only=True)
+
+    class Meta:
+        model = ItemOrden
+        fields = ('producto', 'cantidad', 'notas')
+
+
+class CocinaOrdenSerializer(serializers.ModelSerializer):
+    referencia = serializers.SerializerMethodField()
+    items = CocinaItemOrdenSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = Orden
+        fields = ('id', 'referencia', 'estado', 'items')
+
+    def get_referencia(self, obj):
+        if obj.mesa_id:
+            return f'Mesa {obj.mesa.numero}'
+        return obj.notas or f'Orden {obj.pk}'
 
 
 class TicketSerializer(serializers.ModelSerializer):

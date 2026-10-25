@@ -1,5 +1,6 @@
 from django.db import models
 from django.utils import timezone
+from django.utils.translation import gettext_lazy as _
 
 
 class ReporteVentaDiaria(models.Model):
@@ -13,8 +14,8 @@ class ReporteVentaDiaria(models.Model):
     generado = models.DateTimeField(auto_now=True)
 
     class Meta:
-        verbose_name = "Reporte de venta diaria"
-        verbose_name_plural = "Reportes de ventas diarias"
+        verbose_name = _("Reporte de venta diaria")
+        verbose_name_plural = _("Reportes de ventas diarias")
         ordering = ["-fecha"]
 
     def __str__(self):

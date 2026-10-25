@@ -5,6 +5,12 @@
 
 const API = 'http://127.0.0.1:8000/api';
 
+function csrfToken() {
+  return document.cookie.split('; ')
+    .find(cookie => cookie.startsWith('csrftoken='))
+    ?.split('=')[1] || '';
+}
+
 /**
  * Realiza el proceso de login:
  * 1. Obtiene tokens JWT
@@ -57,11 +63,22 @@ async function doLogin() {
         localStorage.setItem('erp_rol',          meData.rol);
         localStorage.setItem('erp_is_superuser', meData.is_superuser);
       } else {
-        localStorage.setItem('erp_rol', 'admin');
+        localStorage.setItem('erp_rol', 'desconocido');
       }
     } catch {
-      localStorage.setItem('erp_rol', 'admin');
+      localStorage.setItem('erp_rol', 'desconocido');
     }
+
+    // Establish the Django session required by the protected ERP HTML route.
+    const sessionRes = await fetch('/api/session-login/', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${tokens.access}`,
+        'X-CSRFToken': csrfToken(),
+      },
+      credentials: 'same-origin',
+    });
+    if (!sessionRes.ok) throw new Error('No se pudo crear la sesión del ERP');
 
     // 4. Redirigir al ERP
     txt.innerHTML      = '✓ Acceso concedido';

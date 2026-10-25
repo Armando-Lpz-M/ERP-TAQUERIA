@@ -1,5 +1,6 @@
 from django.contrib import admin
 from unfold.admin import ModelAdmin, TabularInline
+from empleados.audit import AuditedModelAdminMixin
 from .models import Categoria, Ingrediente, Producto, RecetaIngrediente
 # Register your models here.
 
@@ -10,7 +11,7 @@ class RecetaIngredienteInline(TabularInline):
 
 
 @admin.register(Categoria)
-class CategoriaAdmin(ModelAdmin):
+class CategoriaAdmin(AuditedModelAdminMixin, ModelAdmin):
     list_display = ("nombre", "activo")
     list_filter = ("activo",)
     search_fields = ("nombre",)
@@ -18,7 +19,7 @@ class CategoriaAdmin(ModelAdmin):
 
 
 @admin.register(Ingrediente)
-class IngredienteAdmin(ModelAdmin):
+class IngredienteAdmin(AuditedModelAdminMixin, ModelAdmin):
     list_display = ("nombre", "unidad", "stock_actual", "stock_minimo", "stock_bajo", "activo")
     list_filter = ("activo", "unidad")
     search_fields = ("nombre",)
@@ -30,7 +31,7 @@ class IngredienteAdmin(ModelAdmin):
 
 
 @admin.register(Producto)
-class ProductoAdmin(ModelAdmin):
+class ProductoAdmin(AuditedModelAdminMixin, ModelAdmin):
     list_display = ("nombre", "categoria", "precio", "disponible")
     list_filter = ("disponible", "categoria")
     search_fields = ("nombre",)
