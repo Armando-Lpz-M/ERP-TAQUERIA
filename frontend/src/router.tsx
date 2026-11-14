@@ -6,7 +6,13 @@ import { AppLayout } from '@/layouts/app-layout'
 import { NAV_ITEMS } from '@/lib/navigation'
 import { ComingSoonPage } from '@/pages/coming-soon-page'
 import { DashboardPage } from '@/pages/dashboard-page'
-import { LazyCocinaPage, LazyOrdenDetallePage, LazyOrdenesPage } from '@/pages/lazy-pages'
+import {
+  LazyCocinaPage,
+  LazyInventarioPage,
+  LazyMenuPage,
+  LazyOrdenDetallePage,
+  LazyOrdenesPage,
+} from '@/pages/lazy-pages'
 import { LoginPage } from '@/pages/login-page'
 import { NotFoundPage } from '@/pages/not-found-page'
 
@@ -15,6 +21,8 @@ const PAGINAS: Record<string, ReactNode> = {
   '/': <DashboardPage />,
   '/ordenes': <LazyOrdenesPage />,
   '/cocina': <LazyCocinaPage />,
+  '/menu': <LazyMenuPage />,
+  '/inventario': <LazyInventarioPage />,
 }
 
 /** Rutas extra dentro de un módulo (mismos roles que el módulo) */

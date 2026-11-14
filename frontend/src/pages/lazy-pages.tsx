@@ -6,6 +6,8 @@ import { FullScreenLoader } from '@/components/full-screen-loader'
 const Ordenes = lazy(() => import('./ordenes-page').then((m) => ({ default: m.OrdenesPage })))
 const OrdenDetalle = lazy(() => import('./orden-detalle-page').then((m) => ({ default: m.OrdenDetallePage })))
 const Cocina = lazy(() => import('./cocina-page').then((m) => ({ default: m.CocinaPage })))
+const Menu = lazy(() => import('./menu-page').then((m) => ({ default: m.MenuPage })))
+const Inventario = lazy(() => import('./inventario-page').then((m) => ({ default: m.InventarioPage })))
 
 export const LazyOrdenesPage = () => (
   <Suspense fallback={<FullScreenLoader />}>
@@ -22,5 +24,17 @@ export const LazyOrdenDetallePage = () => (
 export const LazyCocinaPage = () => (
   <Suspense fallback={<FullScreenLoader />}>
     <Cocina />
+  </Suspense>
+)
+
+export const LazyMenuPage = () => (
+  <Suspense fallback={<FullScreenLoader />}>
+    <Menu />
+  </Suspense>
+)
+
+export const LazyInventarioPage = () => (
+  <Suspense fallback={<FullScreenLoader />}>
+    <Inventario />
   </Suspense>
 )

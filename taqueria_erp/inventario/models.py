@@ -1,4 +1,5 @@
 from django.db import models
+from django.db.models import F
 from django.utils.translation import gettext_lazy as _
 from cocina.models import Ingrediente
 
@@ -40,9 +41,12 @@ class EntradaInventario(models.Model):
         return self.cantidad * self.costo_unitario
 
     def save(self, *args, **kwargs):
+        nuevo = self._state.adding
         super().save(*args, **kwargs)
-        self.ingrediente.stock_actual += self.cantidad
-        self.ingrediente.save()
+        if nuevo:
+            # Suma atómica en la base: dos movimientos simultáneos no se pisan
+            Ingrediente.objects.filter(pk=self.ingrediente_id).update(stock_actual=F("stock_actual") + self.cantidad)
+            self.ingrediente.refresh_from_db(fields=["stock_actual"])
 
 
 class SalidaInventario(models.Model):
@@ -67,6 +71,8 @@ class SalidaInventario(models.Model):
         return f"{self.ingrediente.nombre} -{self.cantidad} ({self.fecha.date()})"
 
     def save(self, *args, **kwargs):
+        nuevo = self._state.adding
         super().save(*args, **kwargs)
-        self.ingrediente.stock_actual -= self.cantidad
-        self.ingrediente.save()
+        if nuevo:
+            Ingrediente.objects.filter(pk=self.ingrediente_id).update(stock_actual=F("stock_actual") - self.cantidad)
+            self.ingrediente.refresh_from_db(fields=["stock_actual"])
