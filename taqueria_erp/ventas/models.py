@@ -1,4 +1,5 @@
 from django.db import models
+from django.utils.translation import gettext_lazy as _
 from cocina.models import Producto
 from empleados.models import Empleado
 
@@ -9,8 +10,8 @@ class Mesa(models.Model):
     activa = models.BooleanField(default=True)
 
     class Meta:
-        verbose_name = "Mesa"
-        verbose_name_plural = "Mesas"
+        verbose_name = _("Mesa")
+        verbose_name_plural = _("Mesas")
         ordering = ["numero"]
 
     def __str__(self):
@@ -19,14 +20,15 @@ class Mesa(models.Model):
 
 class Orden(models.Model):
     ESTADO_CHOICES = [
-        ("abierta", "Abierta"),
-        ("en_proceso", "En proceso"),
-        ("lista", "Lista"),
-        ("pagada", "Pagada"),
-        ("cancelada", "Cancelada"),
+        ("abierta", _("Abierta")),
+        ("en_proceso", _("En proceso")),
+        ("lista", _("Lista")),
+        ("pagada", _("Pagada")),
+        ("cancelada", _("Cancelada")),
     ]
 
     mesa = models.ForeignKey(Mesa, on_delete=models.SET_NULL, null=True, blank=True)
+    cliente = models.CharField(max_length=100, blank=True, help_text=_("Nombre del cliente cuando no hay mesa"))
     empleado = models.ForeignKey(Empleado, on_delete=models.SET_NULL, null=True)
     estado = models.CharField(max_length=20, choices=ESTADO_CHOICES, default="abierta")
     creada = models.DateTimeField(auto_now_add=True)
@@ -34,8 +36,8 @@ class Orden(models.Model):
     notas = models.TextField(blank=True)
 
     class Meta:
-        verbose_name = "Orden"
-        verbose_name_plural = "Órdenes"
+        verbose_name = _("Orden")
+        verbose_name_plural = _("Órdenes")
         ordering = ["-creada"]
 
     def __str__(self):
@@ -44,6 +46,13 @@ class Orden(models.Model):
     @property
     def total(self):
         return sum(item.subtotal for item in self.items.all())
+
+    @property
+    def referencia(self):
+        """Cómo se identifica la orden: mesa, nombre del cliente o número."""
+        if self.mesa_id:
+            return f"Mesa {self.mesa.numero}"
+        return self.cliente or self.notas or f"Orden {self.pk}"
 
 
 class ItemOrden(models.Model):
@@ -54,8 +63,8 @@ class ItemOrden(models.Model):
     notas = models.TextField(blank=True)
 
     class Meta:
-        verbose_name = "Item de orden"
-        verbose_name_plural = "Items de orden"
+        verbose_name = _("Item de orden")
+        verbose_name_plural = _("Items de orden")
 
     def __str__(self):
         return f"{self.cantidad}x {self.producto.nombre}"
@@ -72,9 +81,9 @@ class ItemOrden(models.Model):
 
 class Ticket(models.Model):
     METODO_PAGO_CHOICES = [
-        ("efectivo", "Efectivo"),
-        ("tarjeta", "Tarjeta"),
-        ("transferencia", "Transferencia"),
+        ("efectivo", _("Efectivo")),
+        ("tarjeta", _("Tarjeta")),
+        ("transferencia", _("Transferencia")),
     ]
 
     orden = models.OneToOneField(Orden, on_delete=models.CASCADE, related_name="ticket")
@@ -85,8 +94,8 @@ class Ticket(models.Model):
     fecha = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        verbose_name = "Ticket"
-        verbose_name_plural = "Tickets"
+        verbose_name = _("Ticket")
+        verbose_name_plural = _("Tickets")
         ordering = ["-fecha"]
 
     def __str__(self):

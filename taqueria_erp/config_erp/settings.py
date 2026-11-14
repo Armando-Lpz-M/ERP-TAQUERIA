@@ -10,69 +10,99 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/6.0/ref/settings/
 """
 
-from logging import config
+from datetime import timedelta
 from pathlib import Path
-from decouple import config
-import dj_database_url
-import dj_database_url
+
+import environ
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 
+env = environ.Env(
+    DEBUG=(bool, False),
+    ALLOWED_HOSTS=(list, ['127.0.0.1', 'localhost']),
+)
+
+environ.Env.read_env(BASE_DIR / '.env')
+
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
+SECRET_KEY = env('SECRET_KEY')
+DEBUG = env('DEBUG')
+ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', default=['127.0.0.1', 'localhost'])
 
-
-# Reemplaza las líneas de SECRET_KEY, DEBUG y ALLOWED_HOSTS por estas:
-SECRET_KEY = config('SECRET_KEY')
-DEBUG = config('DEBUG', default=True, cast=bool)
-ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='127.0.0.1').split(',')
+SECURE_SSL_REDIRECT = env.bool('SECURE_SSL_REDIRECT', default=not DEBUG)
+SESSION_COOKIE_SECURE = env.bool('SESSION_COOKIE_SECURE', default=not DEBUG)
+CSRF_COOKIE_SECURE = env.bool('CSRF_COOKIE_SECURE', default=not DEBUG)
+SECURE_HSTS_SECONDS = env.int('SECURE_HSTS_SECONDS', default=31536000 if not DEBUG else 0)
+SECURE_HSTS_INCLUDE_SUBDOMAINS = env.bool('SECURE_HSTS_INCLUDE_SUBDOMAINS', default=True)
+SECURE_HSTS_PRELOAD = env.bool('SECURE_HSTS_PRELOAD', default=True)
+SECURE_CONTENT_TYPE_NOSNIFF = env.bool('SECURE_CONTENT_TYPE_NOSNIFF', default=True)
+SECURE_REFERRER_POLICY = env('SECURE_REFERRER_POLICY', default='same-origin')
+X_FRAME_OPTIONS = 'DENY'
 
 
 # Application definition
 
 INSTALLED_APPS = [
     'unfold',
+    'axes',
     'corsheaders',
-    'django.contrib.admin',
+    'config_erp.admin.ERPAdminConfig',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'rest_framework',      
-    'django_filters', 
+    'rest_framework',
+    'django_filters',
     'inventario',
     'ventas',
-    'cocina',   
+    'cocina',
     'empleados',
     'reportes',
 ]
 
 MIDDLEWARE = [
-    'corsheaders.middleware.CorsMiddleware', 
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
+    'axes.middleware.AxesMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'django.middleware.locale.LocaleMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'config_erp.middleware.AdminOwnerOnlyMiddleware',
+    'config_erp.middleware.AuditoriaAccesosDenegadosMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
+
+AUTHENTICATION_BACKENDS = [
+    'axes.backends.AxesStandaloneBackend',
+    'django.contrib.auth.backends.ModelBackend',
+]
+
+AXES_FAILURE_LIMIT = env.int('AXES_FAILURE_LIMIT', default=5)
+AXES_COOLOFF_TIME = env.float('AXES_COOLOFF_TIME', default=1)
+AXES_RESET_ON_SUCCESS = env.bool('AXES_RESET_ON_SUCCESS', default=True)
+AXES_LOCKOUT_TEMPLATE = '403.html'
 
 ROOT_URLCONF = 'config_erp.urls'
 
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [BASE_DIR / 'templates'],
+        'DIRS': [],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
                 'django.template.context_processors.request',
+                'django.template.context_processors.i18n',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
             ],
@@ -92,7 +122,8 @@ REST_FRAMEWORK = {
     ],
 }
 
-from datetime import timedelta
+ADMIN_URL = env('ADMIN_URL', default='gestion-privada/').strip('/') + '/'
+
 SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(hours=8),
     'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
@@ -100,14 +131,18 @@ SIMPLE_JWT = {
 
 # Database
 # https://docs.djangoproject.com/en/6.0/ref/settings/#databases
-
 DATABASES = {
-    'default': dj_database_url.parse(
-        config('DATABASE_URL'),
-        conn_max_age=60,
-        ssl_require=True,
-    )
+    'default': env.db('DATABASE_URL')
 }
+
+EMAIL_BACKEND = env('EMAIL_BACKEND', default='django.core.mail.backends.smtp.EmailBackend')
+EMAIL_HOST = env('EMAIL_HOST', default='localhost')
+EMAIL_PORT = env.int('EMAIL_PORT', default=587)
+EMAIL_USE_TLS = env.bool('EMAIL_USE_TLS', default=True)
+EMAIL_HOST_USER = env('EMAIL_HOST_USER', default='')
+EMAIL_HOST_PASSWORD = env('EMAIL_HOST_PASSWORD', default='')
+DEFAULT_FROM_EMAIL = env('DEFAULT_FROM_EMAIL', default='noreply@example.com')
+CURRENCY_CODE = env('CURRENCY_CODE', default='MXN')
 
 
 # Password validation
@@ -132,12 +167,19 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 # https://docs.djangoproject.com/en/6.0/topics/i18n/
 
-LANGUAGE_CODE = 'en-us'
+LANGUAGE_CODE = 'es-mx'
 
-TIME_ZONE = 'UTC'
+LANGUAGES = [
+    ('es-mx', 'Español'),
+    ('en', 'English'),
+]
+
+LOCALE_PATHS = [BASE_DIR / 'locale']
+
+TIME_ZONE = env('TIME_ZONE', default='America/Mexico_City')
 
 USE_I18N = True
-
+USE_L10N = True
 USE_TZ = True
 
 
@@ -146,12 +188,21 @@ USE_TZ = True
 
 # ── ARCHIVOS ESTÁTICOS ──
 STATIC_URL = '/static/'
-STATICFILES_DIRS = [BASE_DIR / 'static']
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 
-CORS_ALLOWED_ORIGINS = [
-    'http://127.0.0.1:8000',
-    'http://localhost:8000',
-]
+# Frontend de React: `npm run build` en ../frontend genera dist/ con los archivos
+# bajo /static/app/. Django sirve index.html para cualquier ruta que no sea API.
+FRONTEND_DIST = Path(env('FRONTEND_DIST', default=str(BASE_DIR.parent / 'frontend' / 'dist')))
+STATICFILES_DIRS = [('app', FRONTEND_DIST)] if FRONTEND_DIST.is_dir() else []
+
+# WhiteNoise sirve los estáticos en producción; los de Vite llevan hash en el
+# nombre y se pueden guardar en caché para siempre.
+WHITENOISE_USE_FINDERS = DEBUG
+WHITENOISE_IMMUTABLE_FILE_TEST = r'^.+/assets/.+-[A-Za-z0-9_-]{8,}\.\w+$'
+
+CORS_ALLOWED_ORIGINS = env.list(
+    'CORS_ORIGINS',
+    default=['http://127.0.0.1:8000', 'http://localhost:8000'],
+)
 
 CORS_ALLOW_CREDENTIALS = True

@@ -1,400 +1,306 @@
-# ERP-TAQUERIA
 # 🌮 Taquería ERP
 
-> Sistema de gestión integral diseñado para optimizar las operaciones diarias de una taquería — desde la toma de órdenes hasta el análisis de ventas, todo en una sola plataforma.
+> Sistema de gestión integral para las operaciones diarias de una taquería: desde la toma de órdenes hasta el análisis de ventas, en una sola plataforma que funciona en celular, tablet y computadora.
 
-![Python](https://img.shields.io/badge/Python-3.13-3776AB?style=flat-square&logo=python&logoColor=white)
+![Python](https://img.shields.io/badge/Python-3.12+-3776AB?style=flat-square&logo=python&logoColor=white)
 ![Django](https://img.shields.io/badge/Django-6.0-092E20?style=flat-square&logo=django&logoColor=white)
-![DRF](https://img.shields.io/badge/Django_REST_Framework-3.x-ff1709?style=flat-square)
+![DRF](https://img.shields.io/badge/Django_REST_Framework-3.18-ff1709?style=flat-square)
+![React](https://img.shields.io/badge/React-19-61DAFB?style=flat-square&logo=react&logoColor=black)
+![TypeScript](https://img.shields.io/badge/TypeScript-7-3178C6?style=flat-square&logo=typescript&logoColor=white)
+![Tailwind](https://img.shields.io/badge/Tailwind_CSS-4-06B6D4?style=flat-square&logo=tailwindcss&logoColor=white)
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Supabase-3ECF8E?style=flat-square&logo=supabase&logoColor=white)
-![JWT](https://img.shields.io/badge/Auth-JWT-black?style=flat-square&logo=jsonwebtokens)
-![JavaScript](https://img.shields.io/badge/JavaScript-Vanilla-F7DF1E?style=flat-square&logo=javascript&logoColor=black)
 ![License](https://img.shields.io/badge/License-MIT-yellow?style=flat-square)
 
 ---
 
 ## 📖 ¿Qué es Taquería ERP?
 
-Taquería ERP es un sistema de gestión empresarial (ERP) desarrollado como proyecto personal para resolver un problema real: la administración manual de una taquería es caótica, propensa a errores y difícil de escalar.
+Un ERP desarrollado para resolver un problema real: la administración manual de una taquería es caótica, propensa a errores y difícil de escalar. Centraliza en una aplicación web lo que el negocio necesita para operar:
 
-Este sistema centraliza en una sola aplicación web todo lo que necesita una taquería para operar eficientemente:
-
-- Tomar órdenes por mesa o cliente
-- Controlar el inventario de ingredientes
-- Gestionar al personal y sus roles
-- Generar reportes de ventas con gráficas
-- Exportar información a Excel y PDF
-
-El proyecto nació con dos objetivos: **resolver un problema real** y **demostrar habilidades fullstack** integrando un backend robusto con Django, una API REST segura con JWT, y un frontend funcional sin depender de frameworks pesados.
+- Tomar órdenes por mesa o por cliente, desde el celular del mesero
+- Mandar los pedidos a cocina y ver su avance en una tablet
+- Cobrar en efectivo, tarjeta o transferencia e imprimir el ticket
+- Descontar del inventario los ingredientes de cada venta, según su receta
+- Administrar menú, inventario, proveedores, empleados y turnos
+- Ver reportes de ventas con gráficas y exportarlos a Excel y PDF
 
 ---
 
-## 🎯 ¿Por qué se hizo?
+## ✨ Características
 
-En negocios pequeños como taquerías, restaurantes o fondas, es común que:
+### 🔐 Acceso y roles
+- Login con JWT: el *access token* vive solo en memoria y el *refresh token* en una cookie `httpOnly` (no se puede robar con XSS)
+- La sesión sobrevive a recargar la página y se renueva sola
+- Bloqueo temporal tras varios intentos fallidos (django-axes)
+- 4 roles: **Administrador, Cajero, Mesero y Cocina (taquero)**; cada endpoint valida el rol en el backend
 
-- Las órdenes se tomen en papel y se pierdan
-- No haya control real del inventario
-- Los cortes de caja sean manuales y tardados
-- No exista forma de saber qué producto se vende más
+### 🧾 Órdenes, cobro y cocina
+- Órdenes por mesa o nombre de cliente, con notas por producto ("sin cebolla")
+- Menú por categorías con búsqueda; el precio siempre lo pone el servidor
+- Pantalla de cocina con pedidos nuevos y en preparación, tiempos de espera y avance de estado
+- Cobro con tres métodos de pago, montos rápidos y cálculo de cambio; no permite cobrar dos veces ni órdenes vacías
+- Ticket imprimible en papel de 80 mm
 
-Este sistema resuelve esos problemas con una interfaz simple que cualquier empleado puede usar desde el primer día, sin necesidad de capacitación técnica.
+### 📦 Menú e inventario
+- Productos, categorías, precios, disponibilidad y **recetas** (ingredientes por pieza)
+- Al cobrar, se descuentan los ingredientes y queda registrada la salida
+- Entradas con costo y proveedor, salidas por merma o ajuste, historial de movimientos
+- Alertas de stock bajo y por agotarse
+- Los movimientos no se editan ni se borran: un error se corrige con un ajuste
 
----
+### 👥 Empleados
+- Alta con usuario y contraseña, cambio de contraseña, baja y reactivación (la baja conserva el historial)
+- Registro de entrada y salida de turnos y horas trabajadas por periodo
 
-## ✨ Características principales
+### 📊 Reportes
+- Calculados en vivo desde los tickets, para cualquier rango de fechas
+- Ventas por día, por hora (hora pico), por método de pago y productos más vendidos
+- Exportación a **Excel** (resumen, por día, productos y tickets) y **PDF**
+- Dashboard con las ventas del día según el rol
 
-### 🔐 Autenticación y roles
-- Login con tokens JWT (access + refresh)
-- 4 roles con permisos diferenciados: **Admin, Cajero, Mesero, Taquero**
-- Refresco automático de token sin cerrar sesión
-- Protección de rutas en frontend y backend
-- Endpoint `/api/me/` para identificar usuario y rol
-
-### 🧾 Gestión de órdenes
-- Creación de órdenes por mesa o nombre de cliente
-- Menú interactivo agrupado por categorías
-- Ticket en tiempo real con suma automática
-- Proceso de cobro con 3 métodos de pago
-- Cálculo automático de cambio
-- Ticket imprimible al finalizar
-
-### 📦 Control de inventario
-- Registro de entradas con proveedor y costo
-- Registro de salidas y mermas
-- Alertas visuales de stock bajo
-- Descuento automático de ingredientes al registrar ventas (signals)
-
-### 👥 Gestión de empleados
-- Alta de empleados con rol asignado
-- Vinculación con usuario de Django
-- Control de turnos con cálculo de horas trabajadas
-
-### 📊 Reportes y análisis
-- Estadísticas del día en tiempo real
-- 4 tipos de gráficas con Chart.js:
-  - Ventas por método de pago (barras)
-  - Tendencia semanal (línea)
-  - Productos más vendidos (barras horizontales)
-  - Distribución de ventas (dona)
-- Exportación a **Excel** con 3 hojas (ventas, inventario, órdenes)
-- Exportación a **PDF** con tablas y gráficas de barras
-- Generación automática de reporte al cerrar cada orden
-
-### 🎨 Interfaz
-- SPA (Single Page Application) sin frameworks de frontend
-- Diseño oscuro profesional con tipografías Bebas Neue + DM Sans
-- Sidebar con navegación por roles
-- Modales para todas las acciones
-- Toast notifications
-- Totalmente responsivo
+### 📱 Interfaz
+- Responsiva: revisada en 360, 400, 820, 1024 y 1366 px
+- En pantallas táctiles, los controles miden al menos 40 px
+- Diseño oscuro con tipografías Bebas Neue + DM Sans
+- Gráficas con colores validados para contraste y daltonismo
 
 ---
 
-## 🏗️ Arquitectura del sistema
+## 🏗️ Arquitectura
 
 ```
-┌─────────────────────────────────────────┐
-│           Frontend (SPA)                │
-│     HTML + CSS + JavaScript Vanilla     │
-│   Chart.js │ SheetJS │ jsPDF            │
-└────────────────┬────────────────────────┘
-                 │ HTTP / JSON
-                 │ Bearer Token (JWT)
-┌────────────────▼────────────────────────┐
-│           Django REST API               │
-│                                         │
-│  ┌─────────┐  ┌──────────┐  ┌────────┐ │
-│  │ cocina  │  │  ventas  │  │  inv.  │ │
-│  └─────────┘  └──────────┘  └────────┘ │
-│  ┌───────────┐  ┌──────────────────┐   │
-│  │ empleados │  │    reportes      │   │
-│  └───────────┘  └──────────────────┘   │
-│                                         │
-│  SimpleJWT │ Permissions │ Signals      │
-└────────────────┬────────────────────────┘
-                 │ psycopg2
-┌────────────────▼────────────────────────┐
-│         PostgreSQL (Supabase)           │
-│              Nube ☁️                    │
-└─────────────────────────────────────────┘
+┌───────────────────────────────────────────┐
+│        Frontend (SPA) — frontend/         │
+│  React 19 · TypeScript · Tailwind 4       │
+│  shadcn/ui · TanStack Query · Recharts    │
+└─────────────────────┬─────────────────────┘
+                      │ HTTP / JSON
+                      │ Bearer (access) + cookie httpOnly (refresh)
+┌─────────────────────▼─────────────────────┐
+│     Django REST API — taqueria_erp/       │
+│  cocina · ventas · inventario ·           │
+│  empleados · reportes                     │
+│  SimpleJWT · roles · axes · auditoría     │
+└─────────────────────┬─────────────────────┘
+                      │ psycopg2
+┌─────────────────────▼─────────────────────┐
+│          PostgreSQL (Supabase)            │
+└───────────────────────────────────────────┘
 ```
+
+En desarrollo, Vite sirve el frontend y reenvía `/api` a Django. En producción, Django sirve el build de React (con WhiteNoise) y la API desde el mismo dominio, sin CORS.
 
 ---
 
-## 🛠️ Stack tecnológico
+## 🛠️ Stack
 
-### Backend
-| Tecnología | Versión | Uso |
-|-----------|---------|-----|
-| Python | 3.13 | Lenguaje base |
-| Django | 6.0 | Framework web principal |
-| Django REST Framework | 3.x | Construcción de la API REST |
-| SimpleJWT | latest | Autenticación con tokens JWT |
-| django-unfold | latest | Panel de administración moderno |
-| django-cors-headers | latest | Manejo de CORS |
-| django-filter | latest | Filtros avanzados en la API |
-| dj-database-url | latest | Conexión a PostgreSQL via URL |
-| python-decouple | latest | Variables de entorno |
-| psycopg2-binary | latest | Driver PostgreSQL para Python |
-| Pillow | latest | Manejo de imágenes |
-
-### Frontend
-| Tecnología | Uso |
-|-----------|-----|
-| HTML5 + CSS3 | Estructura y estilos |
-| JavaScript ES6+ | Lógica del cliente, fetch API, async/await |
-| Chart.js | Gráficas interactivas |
-| SheetJS (xlsx) | Exportación a Excel |
-| jsPDF + AutoTable | Exportación a PDF |
-| Google Fonts | Tipografías (Bebas Neue + DM Sans) |
-
-### Base de datos e infraestructura
-| Tecnología | Uso |
-|-----------|-----|
-| PostgreSQL | Base de datos relacional |
-| Supabase | Hosting PostgreSQL en la nube |
-| Git + GitHub | Control de versiones |
+| Capa | Tecnologías |
+|---|---|
+| Backend | Python 3.12+, Django 6, Django REST Framework, SimpleJWT, django-axes, django-filter, django-unfold (admin) |
+| Archivos | ReportLab (PDF), openpyxl (Excel), Pillow, WhiteNoise |
+| Frontend | React 19, TypeScript, Vite, Tailwind CSS 4, shadcn/ui (Radix), React Router |
+| Datos y formularios | TanStack Query, React Hook Form, Zod |
+| Gráficas | Recharts |
+| Base de datos | PostgreSQL en Supabase |
 
 ---
 
-## 📁 Estructura del proyecto
+## 🚀 Instalación
 
+### Requisitos
+- Python 3.12 o más nuevo
+- Node 26 (con [nvm](https://github.com/nvm-sh/nvm): `nvm install` dentro de `frontend/`)
+- Una base de datos PostgreSQL (por ejemplo, un proyecto gratuito en [Supabase](https://supabase.com))
+
+### 1. Backend
+
+```bash
+cd taqueria_erp
+python3 -m venv venv
+source venv/bin/activate          # Windows: venv\Scripts\activate
+pip install -r requirements.txt
 ```
-taqueria_erp/
-├── config_erp/                # Configuración principal de Django
-│   ├── settings.py            # Configuración global
-│   ├── urls.py                # URLs principales + /api/me/
-│   ├── utils.py               # Manejador de errores centralizado
-│   ├── wsgi.py
-│   └── asgi.py
-├── cocina/                    # App: menú, categorías, ingredientes, recetas
-│   ├── models.py
-│   ├── serializers.py
-│   ├── views.py
-│   ├── admin.py
-│   └── urls.py
-├── ventas/                    # App: órdenes, items, tickets, mesas
-│   ├── models.py              # Signal para descontar ingredientes
-│   ├── serializers.py
-│   ├── views.py
-│   └── urls.py
-├── inventario/                # App: entradas, salidas, proveedores
-│   ├── models.py
-│   ├── serializers.py
-│   ├── views.py
-│   └── urls.py
-├── empleados/                 # App: empleados, turnos, permisos
-│   ├── models.py
-│   ├── serializers.py
-│   ├── views.py
-│   ├── permissions.py         # Permisos por rol
-│   └── urls.py
-├── reportes/                  # App: reportes de ventas diarias
-│   ├── models.py
-│   ├── serializers.py
-│   ├── views.py
-│   └── urls.py
-├── templates/
-│   ├── login.html             # Página de acceso con diseño split-screen
-│   └── erp_taqueria.html      # Sistema ERP completo (SPA)
-├── static/
-├── media/
-├── logs/
-├── manage.py
-├── requirements.txt
-└── README.md
+
+Crea `taqueria_erp/.env`:
+
+```env
+SECRET_KEY=una-clave-larga-y-aleatoria
+DEBUG=True
+ALLOWED_HOSTS=127.0.0.1,localhost
+DATABASE_URL=postgresql://usuario:password@host:5432/postgres?sslmode=require
+CORS_ORIGINS=http://127.0.0.1:8000,http://localhost:8000
+```
+
+```bash
+python manage.py migrate
+python manage.py createsuperuser
+```
+
+### 2. Frontend
+
+```bash
+cd frontend
+nvm use
+npm install
+cp .env.example .env
+```
+
+### 3. Desarrollo (dos terminales)
+
+```bash
+# Terminal 1
+cd taqueria_erp && source venv/bin/activate
+python manage.py runserver
+```
+
+```bash
+# Terminal 2
+cd frontend
+npm run dev
+```
+
+Abre **http://localhost:5173**.
+
+### 4. Producción
+
+```bash
+cd frontend && npm run build                 # genera frontend/dist
+cd ../taqueria_erp
+python manage.py collectstatic --noinput     # copia el build a staticfiles/
+```
+
+Con `DEBUG=False`, Django sirve la aplicación completa (frontend y API) desde un solo servidor; usa un servidor WSGI como gunicorn detrás de HTTPS.
+
+### Pruebas
+
+```bash
+cd taqueria_erp && python manage.py test      # backend
+cd frontend && npm run lint && npm run build  # frontend
 ```
 
 ---
 
-## 🔑 Sistema de roles y permisos
+## 🔑 Roles y permisos
 
-| Módulo | Admin | Cajero | Mesero | Taquero |
-|--------|:-----:|:------:|:------:|:-------:|
+| Módulo | Admin | Cajero | Mesero | Cocina |
+|---|:-:|:-:|:-:|:-:|
 | Dashboard | ✅ | ✅ | ✅ | ✅ |
-| Tomar Orden | ✅ | ✅ | ✅ | ✅ |
-| Cobrar orden | ✅ | ✅ | ❌ | ❌ |
-| Menú (editar) | ✅ | ❌ | ❌ | ❌ |
-| Inventario | ✅ | ✅ | ❌ | ❌ |
+| Tomar orden | ✅ | ✅ | ✅ (solo las suyas) | ❌ |
+| Cobrar | ✅ | ✅ | ❌ | ❌ |
+| Cocina | ✅ | ❌ | ❌ | ✅ |
+| Menú e inventario | ✅ | ❌ | ❌ | ❌ |
 | Empleados | ✅ | ❌ | ❌ | ❌ |
-| Reportes | ✅ | ✅ | ❌ | ❌ |
+| Reportes | ✅ | ✅ (solo el día de hoy) | ❌ | ❌ |
+| Exportar Excel/PDF | ✅ | ❌ | ❌ | ❌ |
 
-Los permisos se aplican tanto en el **frontend** (ocultando secciones del sidebar) como en el **backend** (protegiendo cada endpoint de la API).
+La cocina nunca recibe precios ni totales. Los permisos se aplican en el backend; el frontend solo oculta lo que el rol no puede usar.
 
 ---
 
-## 🔌 API Endpoints
+## 🔌 API
 
 ### Autenticación
 ```
-POST   /api/token/                         Obtener access + refresh token
-POST   /api/token/refresh/                 Refrescar access token
-GET    /api/me/                            Info y rol del usuario actual
-```
-
-### Cocina
-```
-GET    /api/cocina/productos/menu/         Menú agrupado por categoría
-GET    /api/cocina/ingredientes/           Lista de ingredientes
-GET    /api/cocina/ingredientes/stock-bajo/ Ingredientes con stock bajo
-POST   /api/cocina/productos/             Crear producto
-PATCH  /api/cocina/productos/{id}/        Editar producto
+POST   /api/auth/login/            Usuario y contraseña → access token + usuario (refresh en cookie)
+POST   /api/auth/refresh/          Renueva el access token con la cookie
+POST   /api/auth/logout/           Cierra la sesión
+GET    /api/me/                    Usuario actual, rol y permisos
 ```
 
 ### Ventas
 ```
-GET    /api/ventas/ordenes/               Lista de órdenes
-POST   /api/ventas/ordenes/               Crear orden
-GET    /api/ventas/ordenes/abiertas/      Órdenes activas
-POST   /api/ventas/ordenes/{id}/cerrar/   Cobrar orden y generar ticket
-GET    /api/ventas/tickets/               Historial de tickets
+GET    /api/ventas/ordenes/activas/                 Órdenes sin cobrar
+POST   /api/ventas/ordenes/                         Crear orden (mesa o cliente, con productos opcionales)
+POST   /api/ventas/ordenes/{id}/items/              Agregar producto
+PATCH  /api/ventas/ordenes/{id}/items/{item}/       Cambiar cantidad o nota
+DELETE /api/ventas/ordenes/{id}/items/{item}/       Quitar producto
+POST   /api/ventas/ordenes/{id}/cerrar/             Cobrar y generar ticket
+POST   /api/ventas/ordenes/{id}/cancelar/           Cancelar
+GET    /api/ventas/ordenes/pendientes-cocina/       Pedidos de cocina (sin precios)
+POST   /api/ventas/ordenes/{id}/cambiar-estado/     Avanzar en cocina
 ```
 
-### Inventario
+### Cocina e inventario
 ```
-POST   /api/inventario/entradas/          Registrar entrada de stock
-POST   /api/inventario/salidas/           Registrar salida o merma
-GET    /api/inventario/proveedores/       Lista de proveedores
+GET    /api/cocina/productos/menu/                  Menú por categoría
+PUT    /api/cocina/productos/{id}/receta/           Ingredientes por pieza
+GET    /api/cocina/ingredientes/stock-bajo/         Ingredientes con stock bajo
+POST   /api/inventario/entradas/                    Registrar compra
+POST   /api/inventario/salidas/                     Registrar merma o ajuste
 ```
 
 ### Empleados
 ```
-GET    /api/empleados/empleados/          Lista de empleados
-POST   /api/empleados/empleados/          Crear empleado
-GET    /api/empleados/turnos/activos/     Empleados con turno activo
+POST   /api/empleados/empleados/                    Alta (con usuario y contraseña opcionales)
+POST   /api/empleados/empleados/{id}/acceso/        Dar acceso o cambiar contraseña
+POST   /api/empleados/empleados/{id}/entrada/       Abrir turno
+POST   /api/empleados/empleados/{id}/salida/        Cerrar turno
+GET    /api/empleados/turnos/?desde=&hasta=         Turnos por periodo
 ```
 
 ### Reportes
 ```
-POST   /api/reportes/ventas-diarias/generar/   Generar reporte del día
-GET    /api/reportes/ventas-diarias/           Historial de reportes
+GET    /api/reportes/resumen/?desde=&hasta=         Resumen de ventas
+GET    /api/reportes/resumen/excel/                 Exportar a Excel
+GET    /api/reportes/resumen/pdf/                   Exportar a PDF
 ```
 
 ---
 
-## 🚀 Instalación y configuración
+## 📁 Estructura
 
-### Prerrequisitos
-- Python 3.10+
-- Cuenta en [Supabase](https://supabase.com) (gratuita)
-- Git
-
-### 1. Clona el repositorio
-
-```bash
-git clone https://github.com/Armando-Lpz-M/ERP-TAQUERIA.git
-cd ERP-TAQUERIA/taqueria_erp
 ```
-
-### 2. Crea y activa el entorno virtual
-
-```bash
-# Windows
-python -m venv venv
-venv\Scripts\activate
-
-# Mac/Linux
-python -m venv venv
-source venv/bin/activate
+ERP-TAQUERIA/
+├── taqueria_erp/              # Backend Django
+│   ├── config_erp/            # Configuración, autenticación y servidor del SPA
+│   ├── cocina/                # Menú, categorías, ingredientes y recetas
+│   ├── ventas/                # Órdenes, cobro y tickets (reglas en services.py)
+│   ├── inventario/            # Proveedores, entradas y salidas
+│   ├── empleados/             # Empleados, turnos, roles y auditoría
+│   ├── reportes/              # Resumen de ventas y exportación
+│   └── requirements.txt
+└── frontend/                  # Frontend React (ver frontend/README.md)
+    └── src/
+        ├── features/          # Lógica por módulo: auth, ordenes, cocina, menu, inventario, empleados, reportes
+        ├── pages/             # Pantallas
+        └── components/        # Componentes compartidos y de shadcn/ui
 ```
-
-### 3. Instala las dependencias
-
-```bash
-pip install -r requirements.txt
-```
-
-### 4. Configura las variables de entorno
-
-Crea un archivo `.env` en la raíz del proyecto:
-
-```env
-SECRET_KEY=tu-secret-key-muy-larga-y-aleatoria
-DEBUG=True
-ALLOWED_HOSTS=127.0.0.1,localhost
-DATABASE_URL=postgresql://usuario:password@host:5432/nombre_db
-CORS_ORIGINS=http://127.0.0.1:8000,http://localhost:8000
-```
-
-### 5. Aplica las migraciones
-
-```bash
-python manage.py migrate
-```
-
-### 6. Crea el superusuario
-
-```bash
-python manage.py createsuperuser
-```
-
-### 7. Inicia el servidor
-
-```bash
-python manage.py runserver
-```
-
-Abre `http://127.0.0.1:8000` — serás redirigido al login automáticamente 🎉
 
 ---
 
 ## 💡 Decisiones técnicas
 
-### ¿Por qué Django y no FastAPI o Flask?
-Django ofrece un ORM robusto, sistema de migraciones, admin panel y autenticación integrados. Para un ERP con múltiples modelos relacionados entre sí, Django es la elección más productiva y mantenible.
+**Django + DRF.** Un ORM sólido, migraciones, admin y autenticación integrados: lo más productivo para un ERP con muchos modelos relacionados.
 
-### ¿Por qué JavaScript Vanilla y no React o Vue?
-El objetivo era demostrar dominio de los fundamentos web sin depender de abstracciones. Un frontend en JS puro también es más fácil de desplegar — no requiere node, npm ni proceso de build.
+**React + TypeScript + shadcn/ui.** El primer frontend era JavaScript sin framework; al crecer a varios módulos se volvió difícil de mantener. React con TypeScript da componentes reutilizables y tipos; shadcn/ui aporta componentes accesibles que viven dentro del proyecto y se adaptan al diseño.
 
-### ¿Por qué Supabase y no un servidor propio?
-Supabase ofrece PostgreSQL gestionado con backups automáticos, SSL, y panel visual sin costo inicial. Para un proyecto de portafolio y uso real en pequeña escala es la opción más pragmática.
+**Tokens fuera de `localStorage`.** El access token vive en memoria y el refresh token en una cookie `httpOnly` con `SameSite=Strict`: un script inyectado no puede leer la sesión.
 
-### ¿Por qué JWT y no sesiones?
-JWT permite una arquitectura desacoplada donde el frontend es completamente independiente del backend. Además es el estándar para APIs REST modernas y permite escalar horizontalmente sin estado de sesión en el servidor.
+**Reglas de negocio en el servidor.** Precios, totales, cobros y descuento de inventario se calculan en el backend dentro de transacciones; el frontend nunca decide un monto.
+
+**Reportes en vivo.** Se calculan desde los tickets para cualquier rango, en lugar de depender de reportes diarios generados a mano.
 
 ---
 
-## 📈 Posibles mejoras futuras
+## 📈 Mejoras futuras
 
-- [ ] App móvil con React Native o Flutter
-- [ ] Impresión real de tickets con ESC/POS
-- [ ] Módulo de nómina básica
-- [ ] Notificaciones en tiempo real con WebSockets
-- [ ] Dashboard con más métricas (ticket promedio, hora pico)
-- [ ] Módulo de proveedores con órdenes de compra
+- [ ] Idioma inglés en el frontend (react-i18next)
+- [ ] Impresión directa de tickets con ESC/POS
+- [ ] Notificaciones en tiempo real para cocina (WebSockets)
+- [ ] Módulo de nómina a partir de los turnos
+- [ ] Órdenes de compra a proveedores
 - [ ] Soporte multi-sucursal
-- [ ] Tests unitarios y de integración
-
----
-
-## 🤝 Contribuciones
-
-Las contribuciones son bienvenidas. Por favor:
-
-1. Haz fork del proyecto
-2. Crea tu rama (`git checkout -b feature/nueva-funcionalidad`)
-3. Haz commit de tus cambios (`git commit -m 'feat: descripción'`)
-4. Push a la rama (`git push origin feature/nueva-funcionalidad`)
-5. Abre un Pull Request
 
 ---
 
 ## 📄 Licencia
 
-Este proyecto está bajo la licencia MIT. Ver [LICENSE](LICENSE) para más detalles.
-
----
+MIT.
 
 ## 👨‍💻 Autor
 
-**Armando López**
-- GitHub: [@Armando-Lpz-M](https://github.com/Armando-Lpz-M)
-
----
+**Armando López** — GitHub: [@Armando-Lpz-M](https://github.com/Armando-Lpz-M)
 
 <div align="center">
   <strong>Hecho con ❤️ y 🌮 en México</strong>
-  <br/>
-  <sub>Un proyecto real para un problema real</sub>
 </div>

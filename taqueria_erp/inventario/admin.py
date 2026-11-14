@@ -1,10 +1,11 @@
 from django.contrib import admin
 from unfold.admin import ModelAdmin
+from empleados.audit import AuditedModelAdminMixin
 from .models import Proveedor, EntradaInventario, SalidaInventario
 
 
 @admin.register(Proveedor)
-class ProveedorAdmin(ModelAdmin):
+class ProveedorAdmin(AuditedModelAdminMixin, ModelAdmin):
     list_display = ("nombre", "contacto", "telefono", "email", "activo")
     list_filter = ("activo",)
     search_fields = ("nombre", "contacto")
@@ -12,7 +13,7 @@ class ProveedorAdmin(ModelAdmin):
 
 
 @admin.register(EntradaInventario)
-class EntradaInventarioAdmin(ModelAdmin):
+class EntradaInventarioAdmin(AuditedModelAdminMixin, ModelAdmin):
     list_display = ("ingrediente", "proveedor", "cantidad", "costo_unitario", "costo_total", "fecha")
     list_filter = ("proveedor", "fecha")
     search_fields = ("ingrediente__nombre",)
@@ -20,7 +21,7 @@ class EntradaInventarioAdmin(ModelAdmin):
 
 
 @admin.register(SalidaInventario)
-class SalidaInventarioAdmin(ModelAdmin):
+class SalidaInventarioAdmin(AuditedModelAdminMixin, ModelAdmin):
     list_display = ("ingrediente", "cantidad", "motivo", "fecha")
     list_filter = ("motivo", "fecha")
     search_fields = ("ingrediente__nombre",)

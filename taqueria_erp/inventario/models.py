@@ -1,4 +1,6 @@
 from django.db import models
+from django.db.models import F
+from django.utils.translation import gettext_lazy as _
 from cocina.models import Ingrediente
 
 # Create your models here.
@@ -10,8 +12,8 @@ class Proveedor(models.Model):
     activo = models.BooleanField(default=True)
 
     class Meta:
-        verbose_name = "Proveedor"
-        verbose_name_plural = "Proveedores"
+        verbose_name = _("Proveedor")
+        verbose_name_plural = _("Proveedores")
         ordering = ["nombre"]
 
     def __str__(self):
@@ -27,8 +29,8 @@ class EntradaInventario(models.Model):
     notas = models.TextField(blank=True)
 
     class Meta:
-        verbose_name = "Entrada de inventario"
-        verbose_name_plural = "Entradas de inventario"
+        verbose_name = _("Entrada de inventario")
+        verbose_name_plural = _("Entradas de inventario")
         ordering = ["-fecha"]
 
     def __str__(self):
@@ -39,9 +41,12 @@ class EntradaInventario(models.Model):
         return self.cantidad * self.costo_unitario
 
     def save(self, *args, **kwargs):
+        nuevo = self._state.adding
         super().save(*args, **kwargs)
-        self.ingrediente.stock_actual += self.cantidad
-        self.ingrediente.save()
+        if nuevo:
+            # Suma atómica en la base: dos movimientos simultáneos no se pisan
+            Ingrediente.objects.filter(pk=self.ingrediente_id).update(stock_actual=F("stock_actual") + self.cantidad)
+            self.ingrediente.refresh_from_db(fields=["stock_actual"])
 
 
 class SalidaInventario(models.Model):
@@ -58,14 +63,16 @@ class SalidaInventario(models.Model):
     notas = models.TextField(blank=True)
 
     class Meta:
-        verbose_name = "Salida de inventario"
-        verbose_name_plural = "Salidas de inventario"
+        verbose_name = _("Salida de inventario")
+        verbose_name_plural = _("Salidas de inventario")
         ordering = ["-fecha"]
 
     def __str__(self):
         return f"{self.ingrediente.nombre} -{self.cantidad} ({self.fecha.date()})"
 
     def save(self, *args, **kwargs):
+        nuevo = self._state.adding
         super().save(*args, **kwargs)
-        self.ingrediente.stock_actual -= self.cantidad
-        self.ingrediente.save()
+        if nuevo:
+            Ingrediente.objects.filter(pk=self.ingrediente_id).update(stock_actual=F("stock_actual") - self.cantidad)
+            self.ingrediente.refresh_from_db(fields=["stock_actual"])
