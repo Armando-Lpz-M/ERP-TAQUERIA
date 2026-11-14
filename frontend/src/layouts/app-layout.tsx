@@ -16,13 +16,14 @@ export function AppLayout() {
   return (
     <SidebarProvider>
       <AppSidebar />
-      <SidebarInset>
+      <SidebarInset className="min-w-0">
         <header className="sticky top-[env(safe-area-inset-top,0px)] z-10 flex h-14 shrink-0 items-center gap-2 border-b border-border bg-background/80 px-4 backdrop-blur">
           <SidebarTrigger className="-ml-1" aria-label="Mostrar u ocultar menú" />
           <Separator orientation="vertical" className="mx-1 h-5 data-vertical:self-center" />
           <h1 className="font-display text-2xl tracking-widest">{pagina?.title ?? 'Taquería ERP'}</h1>
         </header>
-        <div className="flex-1 p-4 sm:p-6">
+        {/* @container/main: las páginas se adaptan al espacio real (con o sin menú lateral) */}
+        <div className="@container/main min-w-0 flex-1 p-4 sm:p-6">
           <Outlet />
         </div>
       </SidebarInset>

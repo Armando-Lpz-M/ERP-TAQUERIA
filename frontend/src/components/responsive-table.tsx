@@ -28,8 +28,9 @@ interface ResponsiveTableProps<T> {
 }
 
 /**
- * En escritorio y tablet es una tabla; en celular cada fila se vuelve tarjeta
- * (sin columnas apretadas ni scroll horizontal).
+ * Con espacio suficiente es una tabla; si el contenedor es angosto (celular, o tablet
+ * con el menú lateral abierto) cada fila se vuelve tarjeta. Decide por el ancho del
+ * contenedor (container query), no por el de la pantalla.
  */
 export function ResponsiveTable<T>({ rows, columns, getKey, title, actions, rowClassName, empty, caption }: ResponsiveTableProps<T>) {
   if (rows.length === 0) {
@@ -39,8 +40,8 @@ export function ResponsiveTable<T>({ rows, columns, getKey, title, actions, rowC
   }
 
   return (
-    <>
-      <Card className="hidden overflow-hidden p-0 md:block">
+    <div className="@container">
+      <Card className="hidden overflow-hidden p-0 @3xl:block">
         <div className="overflow-x-auto">
           <Table>
             {caption && <caption className="sr-only">{caption}</caption>}
@@ -74,7 +75,7 @@ export function ResponsiveTable<T>({ rows, columns, getKey, title, actions, rowC
         </div>
       </Card>
 
-      <ul className="flex flex-col gap-3 md:hidden" aria-label={caption}>
+      <ul className="grid gap-3 @lg:grid-cols-2 @3xl:hidden" aria-label={caption}>
         {rows.map((row) => (
           <li key={getKey(row)}>
             <Card className={cn('gap-3 p-4', rowClassName?.(row))}>
@@ -94,6 +95,6 @@ export function ResponsiveTable<T>({ rows, columns, getKey, title, actions, rowC
           </li>
         ))}
       </ul>
-    </>
+    </div>
   )
 }

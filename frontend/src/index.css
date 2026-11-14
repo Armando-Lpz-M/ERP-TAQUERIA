@@ -151,3 +151,30 @@
     background: white;
   }
 }
+
+/*
+ * Pantallas táctiles (celular, tablet): controles de al menos 40px para el dedo.
+ * Fuera de las capas de Tailwind para tener prioridad; con mouse todo queda compacto.
+ */
+@media (pointer: coarse) {
+  [data-slot='button'],
+  [data-slot='toggle-group-item'],
+  [data-slot='select-trigger'],
+  [data-slot='input'],
+  [data-sidebar='menu-button'] {
+    min-height: 2.5rem;
+  }
+  button[data-size^='icon'],
+  [data-sidebar='trigger'] {
+    min-width: 2.5rem;
+    min-height: 2.5rem;
+  }
+  [data-slot='tabs-list'] {
+    height: auto;
+    min-height: 2.75rem;
+  }
+  [data-slot='tabs-trigger'] {
+    min-height: 2.25rem;
+    padding-inline: 0.75rem;
+  }
+}

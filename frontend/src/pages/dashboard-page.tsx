@@ -192,12 +192,12 @@ export function DashboardPage() {
         </h3>
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {accesos.map((item) => (
-            <Link key={item.path} to={item.path} className="rounded-xl outline-none focus-visible:ring-2 focus-visible:ring-ring">
+            <Link key={item.path} to={item.path} className="min-w-0 rounded-xl outline-none focus-visible:ring-2 focus-visible:ring-ring">
               <Card className="h-full flex-row items-center gap-3 px-4 py-3 transition-colors hover:border-primary/40 hover:bg-secondary">
                 <span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-accent text-accent-foreground">
                   <item.icon className="size-5" aria-hidden />
                 </span>
-                <span className="min-w-0">
+                <span className="min-w-0 flex-1">
                   <span className="block font-medium">{item.title}</span>
                   <span className="block truncate text-xs text-muted-foreground">{item.description}</span>
                 </span>

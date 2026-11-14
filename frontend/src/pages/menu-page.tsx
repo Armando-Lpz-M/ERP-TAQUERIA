@@ -76,7 +76,7 @@ function ProductosTab() {
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+      <div className="flex flex-col gap-3 @2xl/main:flex-row @2xl/main:items-center">
         <div className="relative flex-1">
           <Search aria-hidden className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
           <Input
@@ -89,7 +89,7 @@ function ProductosTab() {
           />
         </div>
         <Select value={categoria} onValueChange={setCategoria}>
-          <SelectTrigger className="w-full sm:w-48" aria-label="Filtrar por categoría">
+          <SelectTrigger className="w-full @2xl/main:w-48" aria-label="Filtrar por categoría">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>

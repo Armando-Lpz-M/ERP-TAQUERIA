@@ -137,7 +137,7 @@ function EmpleadoCard({
           </Badge>
         )}
         {empleado.telefono && (
-          <a href={`tel:${empleado.telefono}`} className="flex items-center gap-1 text-muted-foreground hover:text-foreground">
+          <a href={`tel:${empleado.telefono}`} className="-my-1 inline-flex min-h-8 items-center gap-1 rounded-md px-1 text-muted-foreground hover:text-foreground">
             <Phone className="size-3.5" aria-hidden /> {empleado.telefono}
           </a>
         )}
@@ -182,7 +182,7 @@ function PersonalTab() {
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex flex-col gap-3 md:flex-row md:items-center">
+      <div className="flex flex-col gap-3 @2xl/main:flex-row @2xl/main:items-center">
         <div className="relative flex-1">
           <Search aria-hidden className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
           <Input
@@ -322,7 +322,7 @@ function TurnosTab() {
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+      <div className="flex flex-col gap-3 @2xl/main:flex-row @2xl/main:items-center">
         <ToggleGroup
           type="single"
           variant="outline"
@@ -336,7 +336,7 @@ function TurnosTab() {
           <ToggleGroupItem value="mes">Este mes</ToggleGroupItem>
         </ToggleGroup>
         <Select value={empleado} onValueChange={setEmpleado}>
-          <SelectTrigger className="w-full sm:w-60" aria-label="Empleado">
+          <SelectTrigger className="w-full @2xl/main:w-60" aria-label="Empleado">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
