@@ -98,12 +98,12 @@
     --ring: #ef9f27;
     --radius: 0.625rem;
 
-    /* Gráficas */
-    --chart-1: #ef9f27;
-    --chart-2: #72c226;
-    --chart-3: #3b82f6;
-    --chart-4: #e24b4a;
-    --chart-5: #fac775;
+    /* Gráficas (validadas contra la tarjeta #201f1b: contraste ≥3:1 y daltonismo) */
+    --chart-1: #ef9f27; /* acento: la serie principal */
+    --chart-2: #3987e5; /* categóricos en orden fijo: azul, naranja, aqua */
+    --chart-3: #d95926;
+    --chart-4: #199e70;
+    --chart-5: #6f6a63; /* gris de contexto (énfasis) */
 
     /* Sidebar */
     --sidebar: #181714;

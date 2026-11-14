@@ -5,9 +5,10 @@ from django.http import HttpResponse
 from django.utils.dateparse import parse_date
 from rest_framework import viewsets
 from rest_framework.decorators import action
+from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 from django.utils import timezone
-from django.db.models import Sum, Count
+from django.db.models import Sum
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import A4, landscape
 from reportlab.lib.styles import getSampleStyleSheet
@@ -15,7 +16,8 @@ from reportlab.lib.units import mm
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
 from empleados.audit import AuditedViewSetMixin
 from .models import ReporteVentaDiaria
-from .serializers import ReporteVentaDiariaSerializer
+from . import exportar, services
+from .serializers import ReporteVentaDiariaSerializer, ResumenSerializer
 from ventas.models import Ticket, ItemOrden
 from empleados.permissions import EsAdmin, EsAdminOCajero, rol_usuario
 
@@ -62,7 +64,7 @@ class ReporteVentaDiariaViewSet(AuditedViewSetMixin, viewsets.ReadOnlyModelViewS
                 orden__ticket__fecha__lt=fin_dia,
             )
             .values("producto__nombre")
-            .annotate(total=Count("id"))
+            .annotate(total=Sum("cantidad"))  # piezas vendidas, no renglones
             .order_by("-total")
             .first()
         )
@@ -100,9 +102,9 @@ class ReporteVentaDiariaViewSet(AuditedViewSetMixin, viewsets.ReadOnlyModelViewS
             bottomMargin=12 * mm,
         )
         styles = getSampleStyleSheet()
-        content = [Paragraph('Taqueria ERP — Sales reports', styles['Title']), Spacer(1, 6 * mm)]
+        content = [Paragraph('Taquería ERP — Reportes de ventas diarias', styles['Title']), Spacer(1, 6 * mm)]
         rows = [[
-            'Date', 'Orders', 'Total sales', 'Cash', 'Card', 'Transfer', 'Best seller',
+            'Fecha', 'Órdenes', 'Ventas', 'Efectivo', 'Tarjeta', 'Transferencia', 'Más vendido',
         ]]
         for report in reports:
             rows.append([
@@ -128,5 +130,59 @@ class ReporteVentaDiariaViewSet(AuditedViewSetMixin, viewsets.ReadOnlyModelViewS
         document.build(content)
 
         response = HttpResponse(buffer.getvalue(), content_type='application/pdf')
-        response['Content-Disposition'] = 'attachment; filename="taqueria-sales-reports.pdf"'
+        response['Content-Disposition'] = 'attachment; filename="reportes-ventas-diarias.pdf"'
+        return response
+
+
+class ResumenVentasViewSet(viewsets.ViewSet):
+    """
+    Resumen de ventas calculado en vivo desde los tickets.
+    ?desde=AAAA-MM-DD&hasta=AAAA-MM-DD (por defecto, hoy). El cajero solo ve el día de hoy.
+    """
+
+    def get_permissions(self):
+        if self.action == 'list':
+            return [EsAdminOCajero()]
+        return [EsAdmin()]
+
+    def _rango(self, request):
+        hoy = timezone.localdate()
+        if rol_usuario(request.user) == 'cajero':
+            return hoy, hoy
+        desde_txt = request.query_params.get('desde', '')
+        hasta_txt = request.query_params.get('hasta', '')
+        try:
+            desde = parse_date(desde_txt) if desde_txt else hoy
+            hasta = parse_date(hasta_txt) if hasta_txt else (desde or hoy)
+        except ValueError:  # bien escrita pero imposible, ej. mes 13
+            desde = hasta = None
+        if desde is None or hasta is None:
+            raise ValidationError({'fecha': 'Usa el formato AAAA-MM-DD.'})
+        if desde > hasta:
+            raise ValidationError({'fecha': 'La fecha inicial debe ser anterior a la final.'})
+        if (hasta - desde).days >= services.MAX_DIAS:
+            raise ValidationError({'fecha': f'El rango máximo es de {services.MAX_DIAS} días.'})
+        return desde, hasta
+
+    def list(self, request):
+        desde, hasta = self._rango(request)
+        return Response(ResumenSerializer(services.resumen(desde, hasta)).data)
+
+    @action(detail=False, methods=['get'], url_path='excel')
+    def excel(self, request):
+        desde, hasta = self._rango(request)
+        res = services.resumen(desde, hasta, top=50)
+        contenido = exportar.excel(res, services.tickets_del_rango(desde, hasta))
+        response = HttpResponse(
+            contenido, content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        )
+        response['Content-Disposition'] = f'attachment; filename="{exportar.nombre_archivo(res, "xlsx")}"'
+        return response
+
+    @action(detail=False, methods=['get'], url_path='pdf')
+    def pdf(self, request):
+        desde, hasta = self._rango(request)
+        res = services.resumen(desde, hasta)
+        response = HttpResponse(exportar.pdf(res), content_type='application/pdf')
+        response['Content-Disposition'] = f'attachment; filename="{exportar.nombre_archivo(res, "pdf")}"'
         return response

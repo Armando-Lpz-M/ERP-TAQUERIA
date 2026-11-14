@@ -1,10 +1,10 @@
-from datetime import date
-from datetime import datetime, timezone as datetime_timezone
+from datetime import date, datetime, timezone as datetime_timezone
 from io import StringIO
 
 from django.contrib.auth.models import Group, User
 from django.core.management import call_command
 from django.test import TestCase, override_settings
+from django.utils import timezone
 from rest_framework.test import APIClient
 from rest_framework_simplejwt.tokens import AccessToken
 
@@ -48,10 +48,13 @@ class RoleAPIAccessTests(TestCase):
 		cls.ticket = Ticket.objects.create(
 			orden=cls.owner_order,
 			total='12.50',
-			fecha=datetime(2026, 10, 25, 12, 0, tzinfo=datetime_timezone.utc),
 		)
-		today = date(2026, 10, 25)
-		ReporteVentaDiaria.objects.create(fecha=today, total_ventas='12.50')
+		# Un ticket de otro día: el cajero no debe verlo (fecha es auto_now_add, se ajusta con update)
+		old_order = Orden.objects.create(mesa=cls.mesa, empleado=cls.users['dueño'][1], notas='old order', estado='pagada')
+		cls.old_ticket = Ticket.objects.create(orden=old_order, total='99.00')
+		Ticket.objects.filter(pk=cls.old_ticket.pk).update(fecha=datetime(2020, 1, 1, 12, 0, tzinfo=datetime_timezone.utc))
+		cls.today = timezone.localdate()
+		ReporteVentaDiaria.objects.create(fecha=cls.today, total_ventas='12.50')
 		ReporteVentaDiaria.objects.create(fecha=date(2020, 1, 1), total_ventas='99.00')
 		cls.ingredient = Ingrediente.objects.create(nombre='Test ingredient', unidad='kg', stock_actual=3)
 		cls.supplier = Proveedor.objects.create(nombre='Test supplier')
@@ -86,7 +89,7 @@ class RoleAPIAccessTests(TestCase):
 		self.assertEqual(response.status_code, 200)
 		reports = self.api.get('/api/reportes/ventas-diarias/?fecha__gte=2020-01-01')
 		self.assertEqual(reports.status_code, 200)
-		self.assertEqual([row['fecha'] for row in reports.data], ['2026-10-25'])
+		self.assertEqual([row['fecha'] for row in reports.data], [timezone.localdate().isoformat()])
 		self.assertEqual(self.api.get('/api/ventas/tickets/').status_code, 200)
 		self.assertEqual(self.api.get('/api/reportes/ventas-diarias/pdf/').status_code, 403)
 		self.authenticate_as('dueño')
@@ -177,7 +180,10 @@ class RoleAPIAccessTests(TestCase):
 		self.authenticate_as('cajero')
 		response = self.api.get('/api/ventas/tickets/')
 		self.assertEqual(response.status_code, 200)
-		self.assertTrue(all(str(ticket['fecha']).startswith('2026-10-25') for ticket in response.data))
+		ids = [ticket['id'] for ticket in response.data]
+		self.assertIn(self.ticket.pk, ids)
+		self.assertNotIn(self.old_ticket.pk, ids)
+		self.assertTrue(all(str(ticket['fecha']).startswith(timezone.localdate().isoformat()) for ticket in response.data))
 
 	def test_price_change_and_deletion_are_audited(self):
 		self.authenticate_as('dueño')

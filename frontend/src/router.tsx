@@ -13,6 +13,7 @@ import {
   LazyMenuPage,
   LazyOrdenDetallePage,
   LazyOrdenesPage,
+  LazyReportesPage,
 } from '@/pages/lazy-pages'
 import { LoginPage } from '@/pages/login-page'
 import { NotFoundPage } from '@/pages/not-found-page'
@@ -25,6 +26,7 @@ const PAGINAS: Record<string, ReactNode> = {
   '/menu': <LazyMenuPage />,
   '/inventario': <LazyInventarioPage />,
   '/empleados': <LazyEmpleadosPage />,
+  '/reportes': <LazyReportesPage />,
 }
 
 /** Rutas extra dentro de un módulo (mismos roles que el módulo) */

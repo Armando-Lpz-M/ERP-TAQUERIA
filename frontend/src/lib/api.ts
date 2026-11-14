@@ -108,3 +108,25 @@ export async function api<T = unknown>(path: string, options: RequestOptions = {
   if (!res.ok) throw new ApiError(res.status, data)
   return data as T
 }
+
+/** Descarga un archivo (Excel, PDF) con la sesión actual y lo guarda en el equipo. */
+export async function descargar(path: string, nombrePorDefecto: string) {
+  const pedir = () =>
+    fetch(`${API_URL}${path}`, {
+      credentials: 'same-origin',
+      headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : {},
+    })
+  let res = await pedir()
+  if (res.status === 401 && (await refreshSession())) res = await pedir()
+  if (!res.ok) throw new ApiError(res.status, await leerCuerpo(res))
+
+  const disposicion = res.headers.get('Content-Disposition') ?? ''
+  const nombre = /filename="?([^"]+)"?/.exec(disposicion)?.[1] ?? nombrePorDefecto
+  const url = URL.createObjectURL(await res.blob())
+  const enlace = Object.assign(document.createElement('a'), { href: url, download: nombre })
+  document.body.append(enlace)
+  enlace.click()
+  enlace.remove()
+  // Liberar la URL con margen: el navegador la sigue leyendo un rato después del clic
+  setTimeout(() => URL.revokeObjectURL(url), 60_000)
+}
