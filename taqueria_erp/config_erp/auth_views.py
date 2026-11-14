@@ -5,9 +5,6 @@ Autenticación para el frontend de React.
   lo guarda solo en memoria.
 - El refresh token viaja en una cookie httpOnly que JavaScript no puede leer,
   así un ataque XSS no puede robar la sesión desde localStorage.
-
-Los endpoints originales (/api/token/, /api/token/refresh/) se conservan
-para el frontend anterior.
 """
 from django.conf import settings
 from django.contrib.auth import get_user_model

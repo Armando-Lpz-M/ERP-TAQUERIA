@@ -69,6 +69,7 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'axes.middleware.AxesMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.locale.LocaleMiddleware',
@@ -96,7 +97,7 @@ ROOT_URLCONF = 'config_erp.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [BASE_DIR / 'templates'],
+        'DIRS': [],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -187,8 +188,17 @@ USE_TZ = True
 
 # ── ARCHIVOS ESTÁTICOS ──
 STATIC_URL = '/static/'
-STATICFILES_DIRS = [BASE_DIR / 'static']
 STATIC_ROOT = BASE_DIR / 'staticfiles'
+
+# Frontend de React: `npm run build` en ../frontend genera dist/ con los archivos
+# bajo /static/app/. Django sirve index.html para cualquier ruta que no sea API.
+FRONTEND_DIST = Path(env('FRONTEND_DIST', default=str(BASE_DIR.parent / 'frontend' / 'dist')))
+STATICFILES_DIRS = [('app', FRONTEND_DIST)] if FRONTEND_DIST.is_dir() else []
+
+# WhiteNoise sirve los estáticos en producción; los de Vite llevan hash en el
+# nombre y se pueden guardar en caché para siempre.
+WHITENOISE_USE_FINDERS = DEBUG
+WHITENOISE_IMMUTABLE_FILE_TEST = r'^.+/assets/.+-[A-Za-z0-9_-]{8,}\.\w+$'
 
 CORS_ALLOWED_ORIGINS = env.list(
     'CORS_ORIGINS',

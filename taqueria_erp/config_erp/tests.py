@@ -1,52 +1,56 @@
-from django.contrib.auth.models import AnonymousUser
-from django.conf import settings
-from django.test import RequestFactory, SimpleTestCase, override_settings
-from django.template.loader import render_to_string
+import tempfile
+from pathlib import Path
+
+from django.test import SimpleTestCase, override_settings
 from django.urls import reverse
-from config_erp.urls import ERPAccessView
 
 
+@override_settings(SECURE_SSL_REDIRECT=False)
 class InternationalizationTests(SimpleTestCase):
     def test_language_can_be_changed_with_post(self):
-        response = self.client.post(
-            reverse('set_language'),
-            {'language': 'es-mx', 'next': '/login/'},
-            HTTP_HOST='localhost',
-            secure=True,
-        )
-
+        response = self.client.post(reverse('set_language'), {'language': 'es-mx', 'next': '/'}, HTTP_HOST='localhost')
         self.assertEqual(response.status_code, 302)
         self.assertEqual(response.cookies['django_language'].value, 'es-mx')
 
-        login_response = self.client.get('/login/', HTTP_HOST='localhost', secure=True)
-        self.assertContains(login_response, '<html lang="es-mx">', html=False)
-        self.assertContains(login_response, 'value="es-mx" selected', html=False)
 
-    def test_javascript_catalog_responds_for_supported_languages(self):
-        expected_messages = {
-            'es-mx': 'Men\\u00fa en modo de demostraci\\u00f3n',
-            'en': 'Menu in demo mode',
-        }
-        for language, expected_message in expected_messages.items():
-            with self.subTest(language=language):
-                response = self.client.get(
-                    reverse('javascript-catalog'),
-                    HTTP_HOST='localhost',
-                    HTTP_ACCEPT_LANGUAGE=language,
-                    secure=True,
-                )
-                self.assertEqual(response.status_code, 200)
-                self.assertEqual(response.headers['Content-Language'], language)
-                self.assertContains(response, expected_message, html=False)
+@override_settings(SECURE_SSL_REDIRECT=False, ADMIN_URL='gestion-privada/')
+class SpaTests(SimpleTestCase):
+    """Django entrega el index.html de React para las rutas del frontend."""
 
-    @override_settings(CURRENCY_CODE='USD', TIME_ZONE='America/Mexico_City')
-    def test_currency_and_timezone_settings_reach_erp_template(self):
-        request = RequestFactory().get('/erp/', HTTP_HOST='localhost')
-        request.user = AnonymousUser()
-        view = ERPAccessView()
-        view.setup(request)
-        context = view.get_context_data()
-        markup = render_to_string(view.template_name, context, request=request)
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.tmp = tempfile.TemporaryDirectory()
+        Path(cls.tmp.name, 'index.html').write_text('<!doctype html><div id="root"></div>', encoding='utf-8')
 
-        self.assertIn('data-currency-code="USD"', markup)
-        self.assertIn(f'data-time-zone="{settings.TIME_ZONE}"', markup)
+    @classmethod
+    def tearDownClass(cls):
+        cls.tmp.cleanup()
+        super().tearDownClass()
+
+    def test_rutas_del_frontend_devuelven_index(self):
+        with self.settings(FRONTEND_DIST=Path(self.tmp.name)):
+            for ruta in ('/', '/login', '/ordenes/12', '/reportes'):
+                with self.subTest(ruta=ruta):
+                    res = self.client.get(ruta)
+                    self.assertEqual(res.status_code, 200)
+                    self.assertIn(b'id="root"', b''.join(res.streaming_content))
+                    self.assertIn('no-cache', res['Cache-Control'])
+
+    def test_rutas_de_api_y_admin_no_caen_en_el_frontend(self):
+        with self.settings(FRONTEND_DIST=Path(self.tmp.name)):
+            self.assertEqual(self.client.get('/api/no-existe/').status_code, 404)
+            self.assertEqual(self.client.get('/api/me/').status_code, 401)
+            self.assertIn(self.client.get('/gestion-privada/').status_code, (301, 302))
+
+    def test_sin_build_avisa_que_falta_compilar(self):
+        with self.settings(FRONTEND_DIST=Path(self.tmp.name) / 'no-existe'):
+            res = self.client.get('/')
+            self.assertEqual(res.status_code, 503)
+            self.assertIn('npm run build', res.content.decode())
+
+    def test_endpoints_viejos_retirados(self):
+        with self.settings(FRONTEND_DIST=Path(self.tmp.name)):
+            for ruta in ('/api/token/', '/api/token/refresh/', '/api/session-login/'):
+                with self.subTest(ruta=ruta):
+                    self.assertEqual(self.client.post(ruta).status_code, 404)

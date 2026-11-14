@@ -9,6 +9,8 @@ export default defineConfig(({ mode }) => {
   const djangoUrl = env.DJANGO_URL || 'http://127.0.0.1:8000'
 
   return {
+    // En producción Django sirve los archivos en /static/app/ (ver STATICFILES_DIRS)
+    base: mode === 'production' ? '/static/app/' : '/',
     plugins: [react(), tailwindcss()],
     resolve: {
       alias: {

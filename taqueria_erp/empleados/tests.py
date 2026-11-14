@@ -6,7 +6,6 @@ from django.core.management import call_command
 from django.test import TestCase, override_settings
 from django.utils import timezone
 from rest_framework.test import APIClient
-from rest_framework_simplejwt.tokens import AccessToken
 
 from cocina.models import Categoria, Ingrediente, Producto
 from empleados.models import Empleado, EventoAuditoria
@@ -143,26 +142,6 @@ class RoleAPIAccessTests(TestCase):
 
 	def test_anonymous_sensitive_api_returns_401(self):
 		self.assertEqual(self.api.get('/api/inventario/entradas/').status_code, 401)
-
-	def test_anonymous_erp_page_redirects_to_login(self):
-		response = self.client.get('/erp/')
-		self.assertIn(response.status_code, (301, 302))
-		self.assertIn('/login/', response.headers['Location'])
-
-	def test_valid_jwt_can_establish_protected_erp_session(self):
-		client = APIClient(enforce_csrf_checks=True)
-		client.get('/login/')
-		token = str(AccessToken.for_user(self.users['mesero'][0]))
-		csrf = client.cookies['csrftoken'].value
-		response = client.post(
-			'/api/session-login/',
-			{},
-			format='json',
-			HTTP_AUTHORIZATION=f'Bearer {token}',
-			HTTP_X_CSRFTOKEN=csrf,
-		)
-		self.assertEqual(response.status_code, 200)
-		self.assertEqual(client.get('/erp/').status_code, 200)
 
 	@override_settings(ADMIN_URL='gestion-privada/')
 	def test_owner_only_admin_path_and_denial_status(self):
