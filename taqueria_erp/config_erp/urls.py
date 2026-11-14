@@ -14,6 +14,8 @@ from rest_framework.response import Response
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from empleados.permissions import rol_usuario
+from config_erp import auth_views
+from config_erp.auth_views import datos_usuario
 
 
 class ERPAccessView(LoginRequiredMixin, PermissionRequiredMixin, TemplateView):
@@ -41,21 +43,7 @@ class ERPAccessView(LoginRequiredMixin, PermissionRequiredMixin, TemplateView):
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def me(request):
-    user = request.user
-    rol = rol_usuario(user)
-    return Response({
-        'id': user.id,
-        'username': user.username,
-        'email': user.email,
-        'is_superuser': user.is_superuser,
-        'rol': rol,
-        'permisos': {
-            'admin': ['*'],
-            'cajero': ['ordenes:create', 'ordenes:close', 'ventas:day', 'menu:read'],
-            'mesero': ['ordenes:create', 'ordenes:own:update', 'menu:read'],
-            'cocina': ['ordenes:kitchen:read', 'ordenes:kitchen:advance'],
-        }.get(rol, []),
-    })
+    return Response(datos_usuario(request.user))
 
 
 @csrf_protect
@@ -84,6 +72,9 @@ urlpatterns = [
     path('api/token/', TokenObtainPairView.as_view(), name='token_obtain'),
     path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     path('api/me/', me, name='me'),
+    path('api/auth/login/', auth_views.login, name='auth_login'),
+    path('api/auth/refresh/', auth_views.refresh, name='auth_refresh'),
+    path('api/auth/logout/', auth_views.logout, name='auth_logout'),
     path('api/session-login/', establish_session, name='session_login'),
     path('api/cocina/', include('cocina.urls')),
     path('api/inventario/', include('inventario.urls')),

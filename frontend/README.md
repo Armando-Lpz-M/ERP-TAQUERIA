@@ -48,17 +48,37 @@ En desarrollo, Vite reenvía todo lo que empieza con `/api` a Django (proxy en `
 | `DJANGO_URL` | `http://127.0.0.1:8000` | A dónde reenvía el proxy de Vite las llamadas a `/api` |
 | `VITE_API_URL` | `/api` | Prefijo de la API que usa el frontend |
 
+## Autenticación
+
+- `POST /api/auth/login/` devuelve el **access token** (se guarda solo en memoria) y los datos del usuario.
+- El **refresh token** viaja en una cookie `httpOnly` (`erp_refresh`, ruta `/api/auth/`): JavaScript no puede leerla, así que un ataque XSS no puede robar la sesión.
+- Al recargar la página, `POST /api/auth/refresh/` usa esa cookie para restaurar la sesión.
+- Si una petición responde 401, `src/lib/api.ts` renueva el token una vez y reintenta; si no se puede, regresa al login.
+- `POST /api/auth/logout/` borra la cookie.
+
+## Roles y navegación
+
+El menú y las rutas salen de una sola lista en `src/lib/navigation.ts`. Cada módulo indica qué roles lo pueden ver (`admin`, `cajero`, `mesero`, `cocina`), con los mismos permisos que valida el backend. Si un rol entra a una URL que no le corresponde, ve la pantalla "Sin permiso".
+
 ## Estructura
 
 ```
 src/
-├── components/ui/   # Componentes de shadcn/ui (se agregan con `npx shadcn add <nombre>`)
-├── hooks/           # Hooks reutilizables
-├── lib/             # Utilidades (cn, cliente de la API, formatos)
-├── providers/       # Providers globales: TanStack Query, tooltips, toasts
-├── App.tsx
+├── components/
+│   ├── ui/              # Componentes de shadcn/ui (se agregan con `npx shadcn add <nombre>`)
+│   └── app-sidebar.tsx  # Menú lateral filtrado por rol
+├── features/auth/       # Sesión: contexto, provider, guardias de rutas y tipos
+├── hooks/
+├── layouts/             # Layout principal (sidebar + encabezado)
+├── lib/
+│   ├── api.ts           # Cliente de la API (token en memoria + renovación automática)
+│   ├── navigation.ts    # Módulos, roles y menú
+│   └── utils.ts
+├── pages/               # Pantallas: login, dashboard, sin permiso, 404…
+├── providers/           # TanStack Query, tooltips y toasts
+├── router.tsx           # Rutas protegidas
 ├── main.tsx
-└── index.css        # Tema: paleta de la taquería y fuentes (Bebas Neue + DM Sans)
+└── index.css            # Tema: paleta de la taquería y fuentes (Bebas Neue + DM Sans)
 ```
 
 ## Tema

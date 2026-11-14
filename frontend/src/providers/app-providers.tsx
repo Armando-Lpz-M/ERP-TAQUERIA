@@ -1,9 +1,15 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
-import { useState, type ReactNode } from 'react'
+import { lazy, Suspense, useState, type ReactNode } from 'react'
 
 import { Toaster } from '@/components/ui/sonner'
 import { TooltipProvider } from '@/components/ui/tooltip'
+
+// Las devtools solo se descargan en desarrollo; no entran al build de producción
+const ReactQueryDevtools = import.meta.env.DEV
+  ? lazy(() =>
+      import('@tanstack/react-query-devtools').then((m) => ({ default: m.ReactQueryDevtools })),
+    )
+  : () => null
 
 export function AppProviders({ children }: { children: ReactNode }) {
   // Un solo QueryClient para toda la app (caché compartido de la API)
@@ -26,7 +32,9 @@ export function AppProviders({ children }: { children: ReactNode }) {
         {children}
         <Toaster position="top-right" richColors closeButton />
       </TooltipProvider>
-      {import.meta.env.DEV && <ReactQueryDevtools buttonPosition="bottom-left" />}
+      <Suspense fallback={null}>
+        <ReactQueryDevtools buttonPosition="bottom-right" />
+      </Suspense>
     </QueryClientProvider>
   )
 }
