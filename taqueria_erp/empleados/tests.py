@@ -77,6 +77,7 @@ class RoleAPIAccessTests(TestCase):
 	def test_cashier_can_close_order_and_sees_only_configured_today(self):
 		self.authenticate_as('cajero')
 		close_order = Orden.objects.create(mesa=self.mesa, empleado=self.users['dueño'][1], notas='cashier close')
+		ItemOrden.objects.create(orden=close_order, producto=self.product, cantidad=1, precio_unitario='12.50')
 		response = self.api.post(
 			f'/api/ventas/ordenes/{close_order.pk}/cerrar/',
 			{'metodo_pago': 'efectivo'},

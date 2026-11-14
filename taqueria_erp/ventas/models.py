@@ -28,6 +28,7 @@ class Orden(models.Model):
     ]
 
     mesa = models.ForeignKey(Mesa, on_delete=models.SET_NULL, null=True, blank=True)
+    cliente = models.CharField(max_length=100, blank=True, help_text=_("Nombre del cliente cuando no hay mesa"))
     empleado = models.ForeignKey(Empleado, on_delete=models.SET_NULL, null=True)
     estado = models.CharField(max_length=20, choices=ESTADO_CHOICES, default="abierta")
     creada = models.DateTimeField(auto_now_add=True)
@@ -45,6 +46,13 @@ class Orden(models.Model):
     @property
     def total(self):
         return sum(item.subtotal for item in self.items.all())
+
+    @property
+    def referencia(self):
+        """Cómo se identifica la orden: mesa, nombre del cliente o número."""
+        if self.mesa_id:
+            return f"Mesa {self.mesa.numero}"
+        return self.cliente or self.notas or f"Orden {self.pk}"
 
 
 class ItemOrden(models.Model):

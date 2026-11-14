@@ -17,8 +17,17 @@ from empleados.permissions import (
     EsAdminOMesero,
     rol_usuario,
 )
-from .models import Mesa, Orden, ItemOrden, Ticket
-from .serializers import CocinaOrdenSerializer, MesaSerializer, OrdenSerializer, TicketSerializer
+from . import services
+from .models import Mesa, Orden, Ticket
+from .serializers import (
+    CobroSerializer,
+    CocinaOrdenSerializer,
+    ItemOrdenSerializer,
+    ItemOrdenUpdateSerializer,
+    MesaSerializer,
+    OrdenSerializer,
+    TicketSerializer,
+)
 
 
 class MesaViewSet(AuditedViewSetMixin, viewsets.ModelViewSet):
@@ -66,9 +75,9 @@ class OrdenViewSet(AuditedViewSetMixin, viewsets.ModelViewSet):
         return OrdenSerializer
 
     def get_permissions(self):
-        if self.action in ('list', 'retrieve', 'abiertas', 'pendientes_cocina'):
+        if self.action in ('list', 'retrieve', 'abiertas', 'activas', 'pendientes_cocina'):
             return [EsAdminOCajeroOMeseroOCocina()]
-        if self.action == 'create':
+        if self.action in ('create', 'agregar_item', 'modificar_item'):
             return [EsAdminOCajeroOMesero()]
         if self.action in ('update', 'partial_update'):
             return [EsAdminOMesero()]
@@ -90,7 +99,15 @@ class OrdenViewSet(AuditedViewSetMixin, viewsets.ModelViewSet):
                 raise PermissionDenied('El usuario mesero no tiene perfil de empleado.') from exc
             serializer.save(empleado=employee)
             return
+        if serializer.validated_data.get('empleado') is None:
+            # Si quien crea la orden es un empleado, queda registrado como responsable
+            serializer.save(empleado=getattr(self.request.user, 'empleado', None))
+            return
         serializer.save()
+
+    def _orden_actualizada(self, orden):
+        orden = Orden.objects.select_related('mesa', 'empleado').prefetch_related('items__producto').get(pk=orden.pk)
+        return Response(OrdenSerializer(orden).data)
 
     def perform_update(self, serializer):
         if rol_usuario(self.request.user) == 'mesero':
@@ -109,24 +126,62 @@ class OrdenViewSet(AuditedViewSetMixin, viewsets.ModelViewSet):
         serializer_class = CocinaOrdenSerializer if rol_usuario(request.user) == 'cocina' else OrdenSerializer
         return Response(serializer_class(ordenes, many=True).data)
 
+    @action(detail=False, methods=['get'], url_path='activas')
+    def activas(self, request):
+        """Órdenes que aún no se cobran ni se cancelan (abiertas, en preparación o listas)."""
+        ordenes = self.get_queryset().filter(estado__in=services.ESTADOS_EDITABLES)
+        serializer_class = CocinaOrdenSerializer if rol_usuario(request.user) == 'cocina' else OrdenSerializer
+        return Response(serializer_class(ordenes, many=True).data)
+
+    @action(detail=True, methods=['post'], url_path='items')
+    def agregar_item(self, request, pk=None):
+        orden = self.get_object()
+        serializer = ItemOrdenSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        data = serializer.validated_data
+        services.agregar_item(
+            orden, rol_usuario(request.user), data['producto'], data.get('cantidad', 1), data.get('notas', '')
+        )
+        return self._orden_actualizada(orden)
+
+    @action(detail=True, methods=['patch', 'delete'], url_path=r'items/(?P<item_id>\d+)')
+    def modificar_item(self, request, pk=None, item_id=None):
+        orden = self.get_object()
+        rol = rol_usuario(request.user)
+        if request.method == 'DELETE':
+            services.quitar_item(orden, rol, int(item_id))
+        else:
+            serializer = ItemOrdenUpdateSerializer(data=request.data)
+            serializer.is_valid(raise_exception=True)
+            services.modificar_item(orden, rol, int(item_id), serializer.validated_data)
+        return self._orden_actualizada(orden)
+
     @action(detail=False, methods=['get'], url_path='pendientes-cocina')
     def pendientes_cocina(self, request):
         if rol_usuario(request.user) not in {'admin', 'cocina'}:
             raise PermissionDenied()
-        orders = Orden.objects.filter(estado__in=('abierta', 'en_proceso')).select_related('mesa').prefetch_related('items__producto')
+        orders = (
+            Orden.objects.filter(estado__in=('abierta', 'en_proceso'))
+            .select_related('mesa')
+            .prefetch_related('items__producto')
+            .order_by('creada')
+        )
         return Response(CocinaOrdenSerializer(orders, many=True).data)
 
     @action(detail=True, methods=["post"], url_path="cerrar", permission_classes=[EsAdminOCajero])
     def cerrar(self, request, pk=None):
+        """Cobra la orden: valida el pago, genera el ticket y descuenta los ingredientes."""
         orden = self.get_object()
-        orden.estado = "pagada"
-        orden.save()
-        ticket = Ticket.objects.create(
-            orden=orden,
-            total=orden.total,
-            metodo_pago=request.data.get("metodo_pago", "efectivo"),
-            pagado_con=request.data.get("pagado_con"),
+        serializer = CobroSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        ticket = services.cobrar_orden(
+            orden,
+            request.user,
+            serializer.validated_data['metodo_pago'],
+            serializer.validated_data.get('pagado_con'),
+            request=request,
         )
+        ticket = Ticket.objects.select_related('orden__mesa', 'orden__empleado').prefetch_related('orden__items__producto').get(pk=ticket.pk)
         return Response(TicketSerializer(ticket).data)
 
     @action(detail=True, methods=['post'], url_path='cancelar')

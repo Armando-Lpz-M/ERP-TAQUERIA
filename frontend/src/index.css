@@ -130,3 +130,24 @@
     @apply font-sans;
     }
 }
+/* Al imprimir solo sale el ticket, en papel de 80 mm */
+@media print {
+  @page {
+    size: 80mm auto;
+    margin: 4mm;
+  }
+  body * {
+    visibility: hidden;
+  }
+  #ticket-imprimible,
+  #ticket-imprimible * {
+    visibility: visible;
+  }
+  #ticket-imprimible {
+    position: absolute;
+    inset: 0 auto auto 0;
+    width: 72mm;
+    box-shadow: none;
+    background: white;
+  }
+}
