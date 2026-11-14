@@ -8,6 +8,7 @@ import { ComingSoonPage } from '@/pages/coming-soon-page'
 import { DashboardPage } from '@/pages/dashboard-page'
 import {
   LazyCocinaPage,
+  LazyEmpleadosPage,
   LazyInventarioPage,
   LazyMenuPage,
   LazyOrdenDetallePage,
@@ -23,6 +24,7 @@ const PAGINAS: Record<string, ReactNode> = {
   '/cocina': <LazyCocinaPage />,
   '/menu': <LazyMenuPage />,
   '/inventario': <LazyInventarioPage />,
+  '/empleados': <LazyEmpleadosPage />,
 }
 
 /** Rutas extra dentro de un módulo (mismos roles que el módulo) */

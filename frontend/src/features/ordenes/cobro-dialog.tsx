@@ -98,7 +98,7 @@ function CobroForm({ orden, onCancel, onCobrado }: { orden: Orden; onCancel: () 
             <ToggleGroupItem
               key={value}
               value={value}
-              className="h-16 flex-col gap-1 data-[state=on]:border-primary data-[state=on]:bg-accent data-[state=on]:text-accent-foreground"
+              className="h-16 flex-col gap-1"
             >
               <Icon className="size-5" />
               <span className="text-xs">{METODO_LABEL[value]}</span>

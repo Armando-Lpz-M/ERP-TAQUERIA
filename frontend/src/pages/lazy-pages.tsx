@@ -7,6 +7,7 @@ const Ordenes = lazy(() => import('./ordenes-page').then((m) => ({ default: m.Or
 const OrdenDetalle = lazy(() => import('./orden-detalle-page').then((m) => ({ default: m.OrdenDetallePage })))
 const Cocina = lazy(() => import('./cocina-page').then((m) => ({ default: m.CocinaPage })))
 const Menu = lazy(() => import('./menu-page').then((m) => ({ default: m.MenuPage })))
+const Empleados = lazy(() => import('./empleados-page').then((m) => ({ default: m.EmpleadosPage })))
 const Inventario = lazy(() => import('./inventario-page').then((m) => ({ default: m.InventarioPage })))
 
 export const LazyOrdenesPage = () => (
@@ -36,5 +37,11 @@ export const LazyMenuPage = () => (
 export const LazyInventarioPage = () => (
   <Suspense fallback={<FullScreenLoader />}>
     <Inventario />
+  </Suspense>
+)
+
+export const LazyEmpleadosPage = () => (
+  <Suspense fallback={<FullScreenLoader />}>
+    <Empleados />
   </Suspense>
 )

@@ -199,10 +199,10 @@ function MovimientoForm({ tipo, ingredienteId, onDone }: { tipo: TipoMovimiento;
                 aria-labelledby="motivo-label"
                 className="grid w-full grid-cols-2"
               >
-                <ToggleGroupItem value="merma" className="data-[state=on]:border-primary data-[state=on]:bg-accent data-[state=on]:text-accent-foreground">
+                <ToggleGroupItem value="merma">
                   Merma
                 </ToggleGroupItem>
-                <ToggleGroupItem value="ajuste" className="data-[state=on]:border-primary data-[state=on]:bg-accent data-[state=on]:text-accent-foreground">
+                <ToggleGroupItem value="ajuste">
                   Ajuste
                 </ToggleGroupItem>
               </ToggleGroup>
