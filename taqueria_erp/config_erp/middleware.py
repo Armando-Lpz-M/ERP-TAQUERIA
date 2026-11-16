@@ -33,7 +33,10 @@ class AuditoriaAccesosDenegadosMiddleware:
         response = self.get_response(request)
         admin_prefix = f'/{settings.ADMIN_URL.strip("/")}/'
         admin_login_redirect = request.path.startswith(admin_prefix) and response.status_code in {301, 302}
-        if response.status_code in self.DENIED_STATUSES or admin_login_redirect:
+        # Un visitante sin sesión que intenta restaurarla (/api/auth/refresh/) no es un acceso denegado,
+        # y los intentos de login fallidos ya los registra django-axes: no llenan la auditoría.
+        anonimo_en_auth = response.status_code == 401 and request.path.startswith('/api/auth/')
+        if (response.status_code in self.DENIED_STATUSES and not anonimo_en_auth) or admin_login_redirect:
             try:
                 registrar_evento(
                     usuario=getattr(request, 'user', None),

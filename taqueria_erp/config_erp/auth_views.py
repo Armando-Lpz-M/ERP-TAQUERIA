@@ -16,7 +16,7 @@ from rest_framework.response import Response
 from rest_framework_simplejwt.exceptions import InvalidToken, TokenError
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer, TokenRefreshSerializer
 from rest_framework_simplejwt.settings import api_settings as jwt_settings
-from rest_framework_simplejwt.tokens import AccessToken
+from rest_framework_simplejwt.tokens import AccessToken, RefreshToken
 
 from empleados.permissions import rol_usuario
 
@@ -121,7 +121,13 @@ def refresh(request):
 @authentication_classes([])
 @permission_classes([AllowAny])
 def logout(request):
-    """Borra la cookie del refresh token."""
+    """Revoca el refresh token y borra su cookie: aunque alguien la haya copiado, ya no sirve."""
+    token = request.COOKIES.get(REFRESH_COOKIE)
+    if token:
+        try:
+            RefreshToken(token).blacklist()
+        except TokenError:
+            pass  # ya había expirado o no era válido: no hay nada que revocar
     response = Response(status=status.HTTP_204_NO_CONTENT)
     _borrar_refresh(response)
     return response

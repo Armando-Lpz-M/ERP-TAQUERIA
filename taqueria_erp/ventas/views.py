@@ -2,7 +2,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
 from django.http import Http404
 from django.utils import timezone
-from rest_framework import filters, status, viewsets
+from rest_framework import filters, mixins, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.exceptions import PermissionDenied, ValidationError
 from rest_framework.response import Response
@@ -38,6 +38,12 @@ class MesaViewSet(AuditedViewSetMixin, viewsets.ModelViewSet):
         if self.action in ['create', 'update', 'partial_update', 'destroy']:
             return [EsAdmin()]
         return [EsAdminOCajeroOMesero()]
+
+    def perform_destroy(self, instance):
+        # Borrado lógico: las órdenes viejas conservan su mesa
+        instance.activa = False
+        instance.save(update_fields=['activa'])
+        registrar_evento(usuario=self.request.user, accion='eliminacion', objeto=instance, request=self.request)
 
 
 class OrdenViewSet(AuditedViewSetMixin, viewsets.ModelViewSet):
@@ -113,9 +119,9 @@ class OrdenViewSet(AuditedViewSetMixin, viewsets.ModelViewSet):
         if rol_usuario(self.request.user) == 'mesero':
             if serializer.instance.estado != 'abierta':
                 raise PermissionDenied('Solo puedes editar pedidos propios que sigan abiertos.')
-            forbidden_fields = set(serializer.validated_data) - {'mesa', 'notas'}
+            forbidden_fields = set(serializer.validated_data) - {'mesa', 'cliente', 'notas'}
             if forbidden_fields:
-                raise PermissionDenied('Solo puedes actualizar mesa y notas del pedido.')
+                raise PermissionDenied('Solo puedes actualizar mesa, cliente y notas del pedido.')
         if 'estado' in serializer.validated_data:
             raise PermissionDenied('Usa la acción de cambio de estado.')
         serializer.save()
@@ -240,7 +246,15 @@ class OrdenViewSet(AuditedViewSetMixin, viewsets.ModelViewSet):
         return Response(CocinaOrdenSerializer(order).data)
 
 
-class TicketViewSet(AuditedViewSetMixin, viewsets.ModelViewSet):
+class TicketViewSet(
+    AuditedViewSetMixin,
+    mixins.ListModelMixin,
+    mixins.RetrieveModelMixin,
+    mixins.DestroyModelMixin,
+    viewsets.GenericViewSet,
+):
+    """Un ticket solo nace al cobrar (/ordenes/{id}/cerrar/) y no se edita; anularlo cancela su orden."""
+
     queryset = Ticket.objects.all()
     serializer_class = TicketSerializer
     filter_backends = [DjangoFilterBackend]

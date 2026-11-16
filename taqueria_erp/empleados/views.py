@@ -5,22 +5,32 @@ from django.utils import timezone
 from django_filters import rest_framework as django_filters
 from rest_framework import filters, status, viewsets
 from rest_framework.decorators import action
-from rest_framework.exceptions import ValidationError
+from rest_framework.exceptions import PermissionDenied, ValidationError
 from rest_framework.response import Response
 
 from .audit import AuditedViewSetMixin, registrar_evento
 from .models import Empleado, Turno
 from .permissions import EsAdmin, sincronizar_grupos_rol
 from .serializers import AccesoSerializer, EmpleadoSerializer, TurnoSerializer
+from .sesiones import revocar_sesiones
 
 
 def _sincronizar_cuenta(empleado):
-    """Grupos según el rol y cuenta bloqueada si el empleado está inactivo."""
+    """Grupos según el rol y cuenta bloqueada (con sus sesiones cerradas) si el empleado está inactivo."""
     sincronizar_grupos_rol(empleado)
     user = empleado.usuario
     if user is not None and user.is_active != empleado.activo:
         user.is_active = empleado.activo
         user.save(update_fields=['is_active'])
+        if not user.is_active:
+            revocar_sesiones(user)
+
+
+def _proteger_superusuario(empleado, solicitante):
+    """Solo un superusuario administra la cuenta de otro superusuario (si no, un admin podría tomar el panel de Django)."""
+    usuario = empleado.usuario
+    if usuario is not None and usuario.is_superuser and not solicitante.is_superuser:
+        raise PermissionDenied('Solo un superusuario puede modificar esta cuenta.')
 
 
 class EmpleadoViewSet(AuditedViewSetMixin, viewsets.ModelViewSet):
@@ -43,6 +53,7 @@ class EmpleadoViewSet(AuditedViewSetMixin, viewsets.ModelViewSet):
 
     @transaction.atomic
     def perform_update(self, serializer):
+        _proteger_superusuario(serializer.instance, self.request.user)
         previous_role = serializer.instance.rol
         if serializer.validated_data.get('activo') is False and serializer.instance.usuario_id == self.request.user.pk:
             raise ValidationError('No puedes desactivar tu propia cuenta.')
@@ -60,6 +71,7 @@ class EmpleadoViewSet(AuditedViewSetMixin, viewsets.ModelViewSet):
     @transaction.atomic
     def perform_destroy(self, instance):
         """Borrado lógico: conserva turnos y órdenes, y bloquea su acceso."""
+        _proteger_superusuario(instance, self.request.user)
         if instance.usuario_id == self.request.user.pk:
             raise ValidationError('No puedes desactivar tu propia cuenta.')
         instance.activo = False
@@ -71,8 +83,9 @@ class EmpleadoViewSet(AuditedViewSetMixin, viewsets.ModelViewSet):
     @action(detail=True, methods=['post'], url_path='acceso')
     @transaction.atomic
     def acceso(self, request, pk=None):
-        """Crea la cuenta del empleado o le asigna una contraseña nueva."""
+        """Crea la cuenta del empleado o le asigna una contraseña nueva (y cierra sus sesiones abiertas)."""
         empleado = self.get_object()
+        _proteger_superusuario(empleado, request.user)
         serializer = AccesoSerializer(data=request.data, context={'empleado': empleado})
         serializer.is_valid(raise_exception=True)
         creada = empleado.usuario is None
@@ -85,6 +98,8 @@ class EmpleadoViewSet(AuditedViewSetMixin, viewsets.ModelViewSet):
             empleado.save(update_fields=['usuario'])
         empleado.usuario.set_password(serializer.validated_data['password'])
         empleado.usuario.save(update_fields=['password'])
+        if not creada:
+            revocar_sesiones(empleado.usuario)
         _sincronizar_cuenta(empleado)
         registrar_evento(
             usuario=request.user,

@@ -29,16 +29,19 @@ Un ERP desarrollado para resolver un problema real: la administración manual de
 ## ✨ Características
 
 ### 🔐 Acceso y roles
-- Login con JWT: el *access token* vive solo en memoria y el *refresh token* en una cookie `httpOnly` (no se puede robar con XSS)
-- La sesión sobrevive a recargar la página y se renueva sola
+- Login con JWT: el *access token* vive solo en memoria (30 min) y el *refresh token* en una cookie `httpOnly` (no se puede robar con XSS)
+- La sesión sobrevive a recargar la página y se renueva sola; cada renovación rota el *refresh token* y anula el anterior
+- Cerrar sesión, cambiar la contraseña o dar de baja a un empleado revocan sus sesiones en todos sus dispositivos
 - Bloqueo temporal tras varios intentos fallidos (django-axes)
 - 4 roles: **Administrador, Cajero, Mesero y Cocina (taquero)**; cada endpoint valida el rol en el backend
+- Solo un superusuario puede administrar la cuenta de otro superusuario (un administrador no puede tomar el panel de Django)
 
 ### 🧾 Órdenes, cobro y cocina
 - Órdenes por mesa o nombre de cliente, con notas por producto ("sin cebolla")
 - Menú por categorías con búsqueda; el precio siempre lo pone el servidor
 - Pantalla de cocina con pedidos nuevos y en preparación, tiempos de espera y avance de estado
 - Cobro con tres métodos de pago, montos rápidos y cálculo de cambio; no permite cobrar dos veces ni órdenes vacías
+- Los tickets no se editan: anular uno cancela su orden y queda en la auditoría
 - Ticket imprimible en papel de 80 mm
 
 ### 📦 Menú e inventario

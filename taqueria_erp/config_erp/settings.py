@@ -58,6 +58,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
+    'rest_framework_simplejwt.token_blacklist',
     'django_filters',
     'inventario',
     'ventas',
@@ -125,8 +126,14 @@ REST_FRAMEWORK = {
 ADMIN_URL = env('ADMIN_URL', default='gestion-privada/').strip('/') + '/'
 
 SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(hours=8),
+    # El frontend renueva el access token solo (frontend/src/lib/api.ts), así que puede durar poco
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=30),
     'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
+    # Cada renovación entrega un refresh token nuevo y anula el anterior. Cerrar sesión,
+    # cambiar la contraseña o dar de baja al empleado revocan los que sigan pendientes.
+    'ROTATE_REFRESH_TOKENS': True,
+    'BLACKLIST_AFTER_ROTATION': True,
+    'UPDATE_LAST_LOGIN': True,
 }
 
 # Database
